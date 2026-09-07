@@ -1,0 +1,8 @@
+# Replace www.example.com 
+User-agent: *
+Allow: /
+
+# Keep source assets and originals out of the index
+Disallow: /assets/img-src/
+
+Sitemap: https://www.example.com/sitemap.xml

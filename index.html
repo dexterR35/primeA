@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<!-- ─────────────────────────────────────────────────────────────────────────
+     BEFORE DEPLOY: replace every https://www.example.com with your real
+     origin (this file, sitemap.xml and robots.txt). Nothing else to change.
+     ───────────────────────────────────────────────────────────────────── -->
+
+<title>Loja Privată - Acces pe bază de recomandare</title>
+<meta name="description" content="Loja Privată nu se caută. Te găsește ea. Un spațiu discret, pentru cei recunoscuți, nu pentru toată lumea. Acces pe bază de recomandare.">
+<link rel="canonical" href="https://www.example.com/">
+
+<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
+<meta name="author" content="Loja Privată">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#111220">
+<meta name="format-detection" content="telephone=no">
+
+<!-- Open Graph -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Loja Privată">
+<meta property="og:locale" content="ro_RO">
+<meta property="og:url" content="https://www.example.com/">
+<meta property="og:title" content="Loja Privată - Nu Se Caută. Te Găsește Ea.">
+<meta property="og:description" content="Un spațiu discret, pentru cei recunoscuți, nu pentru toată lumea.">
+<meta property="og:image" content="https://www.example.com/assets/img/og-image.jpg">
+<meta property="og:image:type" content="image/jpeg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Loja Privată - Nu Se Caută. Te Găsește Ea.">
+
+<!-- Twitter / X -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Loja Privată - Nu Se Caută. Te Găsește Ea.">
+<meta name="twitter:description" content="Un spațiu discret, pentru cei recunoscuți, nu pentru toată lumea.">
+<meta name="twitter:image" content="https://www.example.com/assets/img/og-image.jpg">
+<meta name="twitter:image:alt" content="Loja Privată - Nu Se Caută. Te Găsește Ea.">
+<!-- <meta name="twitter:site" content="@lojaprivata"> -->
+
+<!-- Icons & PWA -->
+<link rel="icon" href="assets/svg/logo-mark.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+<link rel="manifest" href="site.webmanifest">
+
+<!-- Fonts - self-hosted, no third-party origin, no visitor IP sent to Google -->
+<!-- Variable fonts: 4 files carry every weight. ă ș ț live in latin-ext,
+     so Romanian copy needs that subset from the first paint too. -->
+<link rel="preload" as="font" type="font/woff2" href="assets/fonts/outfit-var-latin.woff2" crossorigin>
+<link rel="preload" as="font" type="font/woff2" href="assets/fonts/outfit-var-latin-ext.woff2" crossorigin>
+<link rel="preload" as="font" type="font/woff2" href="assets/fonts/inter-var-latin.woff2" crossorigin>
+<link rel="preload" as="font" type="font/woff2" href="assets/fonts/inter-var-latin-ext.woff2" crossorigin>
+<link rel="stylesheet" href="assets/css/fonts.css">
+
+<!-- Critical asset: the LCP hero image -->
+<link rel="preload" as="image" href="assets/img/hero-desktop.png" media="(min-width: 768px)">
+<link rel="preload" as="image" href="assets/img/hero-mobile.png" media="(max-width: 767px)">
+
+<link rel="stylesheet" href="assets/css/style.css">
+
+<!-- Content Security Policy, enforced by the page itself.
+     Everything the page needs is same-origin (fonts are self-hosted), so the
+     policy can stay strict without exceptions. If you later add an analytics
+     script or an external endpoint, widen script-src / connect-src here.
+     Note: frame-ancestors and HSTS are ignored in a <meta> tag - those two
+     only work as real response headers if you ever want clickjacking and
+     transport protection on top of this. -->
+<meta http-equiv="Content-Security-Policy" content="
+  default-src 'self';
+  base-uri 'self';
+  form-action 'self';
+  object-src 'none';
+  script-src 'self';
+  style-src 'self';
+  img-src 'self' data:;
+  font-src 'self';
+  connect-src 'self';
+  manifest-src 'self';
+  upgrade-insecure-requests">
+
+<!-- Structured data -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": "https://www.example.com/#organization",
+      "name": "Loja Privată",
+      "url": "https://www.example.com/",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://www.example.com/assets/img/icon-512.png",
+        "width": 512,
+        "height": 512
+      },
+      "description": "Un spațiu discret, cu acces pe bază de recomandare.",
+      "slogan": "Nu se cumpără. Se merită."
+    },
+    {
+      "@type": "WebSite",
+      "@id": "https://www.example.com/#website",
+      "url": "https://www.example.com/",
+      "name": "Loja Privată",
+      "publisher": { "@id": "https://www.example.com/#organization" },
+      "inLanguage": "ro-RO"
+    },
+    {
+      "@type": "WebPage",
+      "@id": "https://www.example.com/#webpage",
+      "url": "https://www.example.com/",
+      "name": "Loja Privată - Acces pe bază de recomandare",
+      "description": "Un spațiu discret, pentru cei recunoscuți, nu pentru toată lumea.",
+      "isPartOf": { "@id": "https://www.example.com/#website" },
+      "about": { "@id": "https://www.example.com/#organization" },
+      "primaryImageOfPage": "https://www.example.com/assets/img/og-image.jpg",
+      "inLanguage": "ro-RO"
+    },
+    {
+      "@type": "ItemList",
+      "name": "Dincolo de ușă",
+      "itemListElement": [
+        { "@type": "ListItem", "position": 1, "name": "Un Singur Om, Mereu Același", "description": "Nu explici de două ori cine ești." },
+        { "@type": "ListItem", "position": 2, "name": "Treci Primul",                "description": "Solicitările tale nu așteaptă la coadă." },
+        { "@type": "ListItem", "position": 3, "name": "Nimic Standard",              "description": "Fiecare detaliu, calibrat pentru tine." },
+        { "@type": "ListItem", "position": 4, "name": "Ce Nu Se Vede Public",        "description": "Acces la beneficii care nu apar altundeva." }
+      ]
+    }
+  ]
+}
+</script>
+
+
+<noscript><link rel="stylesheet" href="assets/css/noscript.css"></noscript>
+</head>
+<body>
+
+<a class="skip-link" href="#main">Sari la conținut</a>
+
+
+<header class="site-header" id="siteHeader">
+  <div class="container site-header_inner">
+
+    <a class="brand" href="#top" aria-label="Loja Privată - pagina principală">
+      <img class="brand_mark" src="assets/svg/logo-mark.svg" alt="" width="28" height="28">
+      <span class="brand_text">
+        <span class="brand_name">LOJA</span>
+        <span class="brand_sub">PRIVATĂ</span>
+      </span>
+    </a>
+
+    <!-- Opens the modal. The href stays a real anchor so it still works
+         if JS is unavailable - app.js calls preventDefault when it can
+         find the dialog. -->
+    <a class="btn btn--primary btn--md" href="#request"
+       data-modal-open="requestModal">Cere Accesul Acum</a>
+
+  </div>
+</header>
+
+<main id="main">
+
+  <section class="hero" id="top" aria-roledescription="carousel" aria-label="Loja Privată">
+    <div class="hero_stage" id="heroStage">
+      <article class="hero_slide is-active" role="group" aria-roledescription="slide" aria-label="1 din 3">
+        <div class="hero_media">
+          <picture>
+            <source media="(max-width: 767px)" srcset="assets/img/hero-mobile.png">
+            <img src="assets/img/hero-desktop.png" alt="Un cuplu îndreptându-se spre un avion privat, în amurg" fetchpriority="high" decoding="async">
+          </picture>
+        </div>
+        <div class="hero_scrim" aria-hidden="true"></div>
+        <div class="hero_content">
+          <div class="container">
+            <div class="hero_copy">
+              <p class="eyebrow eyebrow--rule">Acces pe bază de recomandare</p>
+              <div class="hero_headline">
+                <h1 class="h1">Loja Privată Nu Se Caută. Te Găsește Ea.</h1>
+                <p class="lead">Un spațiu discret, pentru cei recunoscuți, nu pentru toată lumea.</p>
+              </div>
+              <a class="link-arrow" href="#request" data-scroll>
+                <span>cere accesul acum</span>
+                <img src="assets/svg/arrow-right.svg" alt="" width="12" height="12" aria-hidden="true">
+              </a>
+            </div>
+          </div>
+        </div>
+
+      </article>
+      <article class="hero_slide" lang="en" role="group" aria-roledescription="slide" aria-label="2 din 3">
+        <div class="hero_media">
+          <picture>
+            <!-- portrait crop below 768 px: art direction, not resolution -->
+            <source media="(max-width: 767px)" srcset="assets/img/hero-2-m.webp">
+            <img src="assets/img/hero-2.webp" alt="Invitați urcând la bordul unui avion privat, în amurg" decoding="async">
+          </picture>
+        </div>
+        <div class="hero_scrim" aria-hidden="true"></div>
+        <div class="hero_content">
+          <div class="container">
+            <div class="hero_copy">
+              <p class="eyebrow eyebrow--rule">Global Concierge</p>
+              <div class="hero_headline">
+                <h2 class="h1">Wherever You Are, Expected</h2>
+                <p class="lead">Travel and access, arranged quietly.</p>
+              </div>
+              <a class="link-arrow" href="#request" data-scroll>
+                <span>request invitation</span>
+                <img src="assets/svg/arrow-right.svg" alt="" width="12" height="12" aria-hidden="true">
+              </a>
+            </div>
+          </div>
+        </div>
+      </article>
+      <article class="hero_slide" lang="en" role="group" aria-roledescription="slide" aria-label="3 din 3">
+        <div class="hero_media">
+          <picture>
+            <!-- portrait crop below 768 px: art direction, not resolution -->
+            <source media="(max-width: 767px)" srcset="assets/img/hero-3-m.webp">
+            <img src="assets/img/hero-3.webp" alt="Un plic de invitație sigilat cu ceară" decoding="async">
+          </picture>
+        </div>
+        <div class="hero_scrim" aria-hidden="true"></div>
+        <div class="hero_content">
+          <div class="container">
+            <div class="hero_copy">
+              <p class="eyebrow eyebrow--rule">By Invitation</p>
+              <div class="hero_headline">
+                <h2 class="h1">Evenings Money Can&rsquo;t Buy</h2>
+                <p class="lead">Invitation-only events, arranged for you.</p>
+              </div>
+
+              <a class="link-arrow" href="#request" data-scroll>
+                <span>request invitation</span>
+                <img src="assets/svg/arrow-right.svg" alt="" width="12" height="12" aria-hidden="true">
+              </a>
+            </div>
+          </div>
+        </div>
+      </article>
+    </div>
+    <div class="hero_controls">
+      <div class="dots" id="heroDots" role="tablist" aria-label="Alege slide-ul"></div>
+      <div class="hero_arrows">
+        <button class="nav-btn" type="button" data-hero-prev aria-label="Slide-ul anterior">
+          <img src="assets/svg/chevron.svg" alt="" width="16" height="16" aria-hidden="true">
+        </button>
+        <button class="nav-btn nav-btn--next" type="button" data-hero-next aria-label="Slide-ul următor">
+          <img src="assets/svg/chevron.svg" alt="" width="16" height="16" aria-hidden="true">
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================== BENEFITS -->
+  <section class="section section--benefits" id="benefits">
+    <div class="container stack stack--xl">
+
+      <header class="section-head reveal">
+        <p class="eyebrow">Dincolo de ușă</p>
+        <h2 class="h2">Aici Regulile Sunt Altele</h2>
+        <p class="section-head_sub">Cei mai mulți nici nu știu că Loja există.</p>
+      </header>
+
+      <ul class="feature-grid reveal">
+
+        <li class="feature">
+          <span class="icon-tile">
+            <img src="assets/svg/smoking.png" alt="smoking" width="42" height="42" aria-hidden="true">
+          </span>
+          <h3 class="h3">Un Singur Om, Mereu Același</h3>
+          <p class="body-sm">Nu explici de două ori cine ești.</p>
+        </li>
+
+        <li class="feature">
+          <span class="icon-tile">
+            <img src="assets/svg/wallet.png" alt="wallet" width="42" height="42" aria-hidden="true">
+          </span>
+          <h3 class="h3">Treci Primul</h3>
+          <p class="body-sm">Solicitările tale nu așteaptă la coadă.</p>
+        </li>
+
+        <li class="feature">
+          <span class="icon-tile">
+            <img src="assets/svg/box.png" alt="box" width="42" height="42" aria-hidden="true">
+          </span>
+          <h3 class="h3">Nimic Standard</h3>
+          <p class="body-sm">Fiecare detaliu, calibrat pentru tine.</p>
+        </li>
+
+        <li class="feature">
+          <span class="icon-tile">
+            <img src="assets/svg/star.png" alt="star" width="42" height="42" aria-hidden="true">
+          </span>
+          <h3 class="h3">Ce Nu Se Vede Public</h3>
+          <p class="body-sm">Acces la beneficii care nu apar altundeva.</p>
+        </li>
+
+      </ul>
+
+    </div>
+  </section>
+
+  <!-- ========================================================== PERKS -->
+  <section class="section section--perks" id="perks">
+    <div class="section_bleed" aria-hidden="true" data-bg></div>
+
+    <div class="container stack stack--xl">
+
+      <header class="section-head reveal">
+        <p class="eyebrow">În interiorul Lojei</p>
+        <h2 class="h2">Ce Se Întâmplă Aici, Rămâne Aici</h2>
+        <p class="section-head_sub">Nimic din ce primești nu e afișat public.</p>
+      </header>
+
+      <ul class="perk-grid reveal">
+
+        <li class="card">
+          <div class="card_media lazy-media">
+            <img data-src="assets/img/perk-1.webp" alt="O cameră privată de joc, cu masă și dealer" width="1024" height="576" decoding="async">
+            <noscript><img src="assets/img/perk-1.webp" alt="O cameră privată de joc, cu masă și dealer" width="1024" height="576"></noscript>
+          </div>
+          <div class="card_body">
+            <h3 class="h3 h3--tight">Camera Ta</h3>
+            <p class="body-sm">Departe de zgomot, de aglomerație, de priviri.</p>
+          </div>
+        </li>
+
+        <li class="card">
+          <div class="card_media lazy-media">
+            <img data-src="assets/img/perk-2.webp" alt="Invitați urcând la bordul unui avion privat, în amurg" width="1024" height="576" decoding="async">
+            <noscript><img src="assets/img/perk-2.webp" alt="Invitați urcând la bordul unui avion privat, în amurg" width="1024" height="576"></noscript>
+          </div>
+          <div class="card_body">
+            <h3 class="h3 h3--tight">Cineva Se Ocupă De Restul</h3>
+            <p class="body-sm">Tu ceri. Noi rezolvăm.</p>
+          </div>
+        </li>
+
+        <li class="card">
+          <div class="card_media lazy-media">
+            <img data-src="assets/img/perk-3.webp" alt="Un plic de invitație sigilat cu ceară" width="1024" height="576" decoding="async">
+            <noscript><img src="assets/img/perk-3.webp" alt="Un plic de invitație sigilat cu ceară" width="1024" height="576"></noscript>
+          </div>
+          <div class="card_body">
+            <h3 class="h3 h3--tight">Seri Care Nu Se Anunță</h3>
+            <p class="body-sm">Evenimente la care ajungi doar invitat.</p>
+          </div>
+        </li>
+
+      </ul>
+
+    </div>
+  </section>
+
+  <!-- ========================================================== CONCIERGE -->
+  <section class="section section--concierge" id="concierge">
+    <div class="container concierge">
+
+      <div class="concierge_copy reveal">
+
+        <p class="eyebrow eyebrow--rule">De ce există Loja</p>
+
+        <div class="stack stack--md">
+          <h2 class="h2 h2--sm">Nu Suntem Aici Pentru Bonusuri. Suntem Aici Pentru Tine.</h2>
+          <p class="body">Experiență perfectă. Rapiditate fără compromis. Zero explicații.</p>
+        </div>
+
+        <ul class="pillars">
+          <li class="pillar">
+            <span class="pillar_num">1</span>
+            <div class="pillar_text">
+              <h3 class="h4">Recunoaștere</h3>
+              <p class="body-xs">Te știm dinainte să spui cine ești.</p>
+            </div>
+          </li>
+          <li class="pillar">
+            <span class="pillar_num">2</span>
+            <div class="pillar_text">
+              <h3 class="h4">Discreție</h3>
+              <p class="body-xs">Ce se discută în Lojă, rămâne în Lojă.</p>
+            </div>
+          </li>
+          <li class="pillar">
+            <span class="pillar_num">3</span>
+            <div class="pillar_text">
+              <h3 class="h4">Prioritate</h3>
+              <p class="body-xs">Fără așteptare pentru tine.</p>
+            </div>
+          </li>
+          <li class="pillar">
+            <span class="pillar_num">4</span>
+            <div class="pillar_text">
+              <h3 class="h4">Cuvânt Dat</h3>
+              <p class="body-xs">Ce promitem, respectăm.</p>
+            </div>
+          </li>
+        </ul>
+
+      </div>
+
+      <div class="concierge_panel reveal">
+        <div class="member-card-scaler">
+          <div class="member-card">
+
+            <img class="member-card_spade" src="assets/svg/spade-union.svg" alt="" width="205" height="205" aria-hidden="true">
+
+            <div class="member-card_brand">
+              <img src="assets/svg/card-logo.svg" alt="" width="24" height="24" aria-hidden="true">
+              <span>LOJA PRIVATĂ</span>
+            </div>
+
+            <p class="member-card_title">STATUT: CONFIDENȚIAL</p>
+
+            <div class="member-card_since">
+              <span class="member-card_since-label">MEMBRU DIN</span>
+              <span class="member-card_since-value">2026</span>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ========================================================== REGISTRATION -->
+  <section class="section section--registration" id="request">
+    <div class="section_bleed" aria-hidden="true" data-bg></div>
+
+    <div class="registration">
+
+      <header class="section-head section-head--center reveal">
+        <p class="eyebrow eyebrow--gold">Nu e pentru oricine</p>
+        <div class="stack stack--sm">
+          <h2 class="h2 h2--reg">Cere Accesul În Lojă</h2>
+          <p class="section-head_sub section-head_sub--narrow">Analizăm fiecare cerere personal. Răspundem cu rapiditate.</p>
+        </div>
+      </header>
+
+      <div class="form-panel reveal">
+        <div class="form-panel_inner">
+
+          <span class="form-panel_ace form-panel_ace--tl" aria-hidden="true">
+            <img src="assets/svg/corner-ace-tl.svg" alt="" width="9" height="21">
+          </span>
+          <span class="form-panel_ace form-panel_ace--br" aria-hidden="true">
+            <img src="assets/svg/corner-ace-br.svg" alt="" width="9" height="21">
+          </span>
+
+          <!-- action/method matter: without them a no-JS submit would GET this
+               page back with the applicant's name and email in the query
+               string - leaking PII into history, logs and Referer. -->
+          <form class="form" id="requestForm"
+                action="/api/invitations" method="post"
+                autocomplete="on" novalidate>
+
+            <!-- Honeypot. Never shown, never announced, never focusable.
+                 Bots fill it; app.js and your server reject those. -->
+            <div class="hp" aria-hidden="true">
+              <label for="company">Companie</label>
+              <input id="company" name="company" type="text"
+                     tabindex="-1" autocomplete="off">
+            </div>
+
+            <div class="stack stack--md">
+
+              <div class="field">
+                <label class="field_label" for="fullName">Nume complet</label>
+                <input class="field_input" id="fullName" name="fullName" type="text"
+                       autocomplete="name" placeholder="Scrie-ți numele și prenumele"
+                       maxlength="80" minlength="2" spellcheck="false" required>
+                <p class="field_error" data-error-for="fullName" hidden></p>
+              </div>
+
+              <div class="field">
+                <label class="field_label" for="email">Adresă de email</label>
+                <input class="field_input" id="email" name="email" type="email"
+                       autocomplete="email" placeholder="Scrie-ți adresa de email"
+                       maxlength="254" inputmode="email" spellcheck="false"
+                       autocapitalize="off" required>
+                <p class="field_error" data-error-for="email" hidden></p>
+              </div>
+
+            </div>
+
+            <p class="consent">
+              Prin trimitere, accepți să fii contactat confidențial în legătură cu
+              accesul tău în Lojă.
+            </p>
+
+            <button class="btn btn--primary btn--lg btn--block" type="submit">Cere Accesul Acum</button>
+
+            <p class="form_status" role="status" aria-live="polite"></p>
+
+          </form>
+
+          <!-- success state -->
+          <div class="form-done" hidden>
+            <img class="form-done_mark" src="assets/svg/logo-mark.svg" alt="" width="48" height="48" aria-hidden="true">
+            <h3 class="h2 h2--sm">Cerere Primită</h3>
+            <p class="body">Îți mulțumim. Analizăm fiecare cerere personal și revenim
+               cu un răspuns în cel mai scurt timp.</p>
+            <button class="link-arrow" type="button" data-form-reset>
+              <span>trimite altă cerere</span>
+              <img src="assets/svg/arrow-right.svg" alt="" width="12" height="12" aria-hidden="true">
+            </button>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+</main>
+
+<!-- ============================================================ FOOTER -->
+<footer class="site-footer">
+  <div class="container site-footer_inner">
+
+    <a class="brand brand--baseline" href="#top" aria-label="Loja Privată - pagina principală">
+      <img class="brand_mark" src="assets/svg/logo-mark-footer.svg" alt="" width="28" height="28">
+      <span class="brand_text brand_text--inline">
+        <span class="brand_name">LOJA</span>
+        <span class="brand_sub">PRIVATĂ</span>
+      </span>
+    </a>
+
+    <p class="site-footer_copy">LOJA PRIVATĂ - Nu se cumpără. Se merită.</p>
+
+    <nav class="site-footer_links" aria-label="Linkuri legale">
+      <a href="#">Confidențialitate</a>
+      <a href="#">Termeni</a>
+      <a href="#">Joc Responsabil</a>
+    </nav>
+
+  </div>
+</footer>
+
+<!-- ============================================================ MODAL
+     Reconstructed from the design system, not exported: the Figma frames
+     "Popup view/Desc." (97:619) and "Popup view/Mob" (97:888) sit behind a
+     rate limit. Their anatomy is known from the file metadata - the same
+     Background+Border+Shadow card, 560 px desktop / 361 px mobile, centred
+     over a dim, which is why the "Sended request" frames share those widths.
+     ================================================================= -->
+<dialog class="modal" id="requestModal" data-modal aria-labelledby="requestModalTitle">
+  <div class="modal_panel">
+
+    <button class="modal_close nav-btn" type="button" data-modal-close aria-label="Închide">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+        <path d="M1 1L13 13M13 1L1 13" stroke="#F6F7F9" stroke-width="1.2" stroke-linecap="round"/>
+      </svg>
+    </button>
+
+    <header class="section-head section-head--center modal_head">
+      <p class="eyebrow eyebrow--gold">Nu e pentru oricine</p>
+      <div class="stack stack--sm">
+        <h2 class="h2 h2--reg" id="requestModalTitle">Cere Accesul În Lojă</h2>
+        <p class="section-head_sub section-head_sub--narrow">Analizăm fiecare cerere personal. Răspundem cu rapiditate.</p>
+      </div>
+    </header>
+
+    <div class="form-panel">
+        <div class="form-panel_inner">
+
+          <span class="form-panel_ace form-panel_ace--tl" aria-hidden="true">
+            <img src="assets/svg/corner-ace-tl.svg" alt="" width="9" height="21">
+          </span>
+          <span class="form-panel_ace form-panel_ace--br" aria-hidden="true">
+            <img src="assets/svg/corner-ace-br.svg" alt="" width="9" height="21">
+          </span>
+
+          <form class="form" id="requestModalForm"
+                action="/api/invitations" method="post"
+                autocomplete="on" novalidate>
+
+            <!-- Honeypot. Never shown, never announced, never focusable.
+                 Bots fill it; app.js and your server reject those. -->
+            <div class="hp" aria-hidden="true">
+              <label for="m-company">Companie</label>
+              <input id="m-company" name="company" type="text"
+                     tabindex="-1" autocomplete="off">
+            </div>
+
+            <div class="stack stack--md">
+
+              <div class="field">
+                <label class="field_label" for="m-fullName">Nume complet</label>
+                <input class="field_input" id="m-fullName" name="fullName" type="text"
+                       autocomplete="name" placeholder="Scrie-ți numele și prenumele"
+                       maxlength="80" minlength="2" spellcheck="false" required>
+                <p class="field_error" data-error-for="fullName" hidden></p>
+              </div>
+
+              <div class="field">
+                <label class="field_label" for="m-email">Adresă de email</label>
+                <input class="field_input" id="m-email" name="email" type="email"
+                       autocomplete="email" placeholder="Scrie-ți adresa de email"
+                       maxlength="254" inputmode="email" spellcheck="false"
+                       autocapitalize="off" required>
+                <p class="field_error" data-error-for="email" hidden></p>
+              </div>
+
+            </div>
+
+            <p class="consent">
+              Prin trimitere, accepți să fii contactat confidențial în legătură cu
+              accesul tău în Lojă.
+            </p>
+
+            <button class="btn btn--primary btn--lg btn--block" type="submit">Cere Accesul Acum</button>
+
+            <p class="form_status" role="status" aria-live="polite"></p>
+
+          </form>
+
+          <!-- success state -->
+          <div class="form-done" hidden>
+            <img class="form-done_mark" src="assets/svg/logo-mark.svg" alt="" width="48" height="48" aria-hidden="true">
+            <h3 class="h2 h2--sm">Cerere Primită</h3>
+            <p class="body">Îți mulțumim. Analizăm fiecare cerere personal și revenim
+               cu un răspuns în cel mai scurt timp.</p>
+            <button class="link-arrow" type="button" data-form-reset>
+              <span>trimite altă cerere</span>
+              <img src="assets/svg/arrow-right.svg" alt="" width="12" height="12" aria-hidden="true">
+            </button>
+          </div>
+
+        </div>
+    </div>
+
+  </div>
+</dialog>
+
+<script src="assets/js/app.js"></script>
+</body>
+</html>

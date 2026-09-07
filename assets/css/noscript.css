@@ -1,0 +1,8 @@
+/* Loaded only when JavaScript is off.*/
+
+.reveal            { opacity: 1 !important; transform: none !important; }
+.lazy-media        { background: none !important; animation: none !important; }
+.lazy-media img    { opacity: 1 !important; }
+.hero_slide       { opacity: 1; }
+.hero_slide ~ .hero_slide { display: none; }   /* show the first slide only */
+.hero_controls    { display: none !important; }
