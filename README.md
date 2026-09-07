@@ -25,10 +25,12 @@ robots.txt            crawl rules + sitemap pointer
 sitemap.xml
 assets/
   css/style.css       tokens → layout → typography → components → sections → responsive
+  css/theme-light.css light ("white") theme - token overrides, scoped to [data-theme=light]
   css/fonts.css       self-hosted variable @font-face declarations
   css/noscript.css    fallback loaded only when JS is off
   fonts/              Inter + Outfit variable woff2 (latin, latin-ext) - 4 files, 177 KB
   js/app.js           lazy media, carousel, sticky header, reveal, form, modal
+  js/theme.js         light/dark switch - render-blocking, runs before first paint
   img/                photography, OG card, app icons
   img-src/            full-resolution originals as exported from Figma
   svg/                logos, icons, decorative hairline patterns
@@ -225,7 +227,8 @@ connect-src 'self'; manifest-src 'self'; upgrade-insecure-requests
 ```
 
 No `'unsafe-inline'` anywhere - that is why the no-JS fallback is `noscript.css` rather than
-an inline `<style>`. Verified with a `securitypolicyviolation` listener: **zero violations**.
+an inline `<style>`, and why the theme switch is `js/theme.js` rather than the usual inline
+anti-flash snippet. Verified with a `securitypolicyviolation` listener: **zero violations**.
 If you add analytics or post to another origin, widen `script-src` / `connect-src` here.
 
 `frame-ancestors` and HSTS are ignored inside a `<meta>` tag; they only work as real response
@@ -301,6 +304,52 @@ specific to it.
 The member card is authored once at its 360 × 226 desktop size and uniformly scaled with
 `--k`. Figma uses the exact same 0.7472 ratio for the mobile variant, so one component
 serves both frames.
+
+---
+
+## Theming - dark and light
+
+Dark is the default and the designed state; light is opt-in through the switch in the
+header. Two files, no build step.
+
+```-
+:root                         the dark palette (style.css)
+:root[data-theme="light"]     the light palette (theme-light.css)
+```
+
+`assets/js/theme.js` is loaded **render-blocking in `<head>`**, before the stylesheets have
+even painted, and stamps `data-theme` on `<html>`. That is the whole reason it is a separate
+file: the CSP forbids inline script, and a returning light-mode visitor must never see a dark
+flash. It also keeps `<meta name="theme-color">` and the button's `aria-label` in step, and
+follows the choice across tabs via the `storage` event. The choice lives in
+`localStorage['lp-theme']`; every access is wrapped, because private-mode Safari throws on
+both read and write.
+
+The default is one string, `DEFAULT` at the top of `theme.js`: `'dark'` (shipped) or
+`'system'` to follow the OS instead - in which case an explicit choice still outranks it, in
+both directions.
+
+**How the light theme is built.** Roughly 95% of it is token overrides: the ink scale becomes
+a paper scale, the white-alpha hairlines become ink-alpha, the shadows become a containing
+ring plus a soft drop. Every literal colour that used to sit inside a rule in `style.css` -
+the header's translucent bar, the modal backdrop, the hero scrim, the gold washes, the
+skeleton sweep, the error red - was lifted into a token first, so the theme file never has to
+restate a component.
+
+Gold is the one colour that cannot simply carry over: `#d89548` manages 2.1:1 on white. Light
+mode reads with `#96631a` (5.0:1) for anything that is text, and keeps a warmer tone for the
+purely decorative washes.
+
+**Two things stay dark on purpose.** The hero is a full-bleed photograph whose scrim exists to
+carry white headline copy - black type on that mid-tone would be unreadable - and the member
+card is a matte-black object, not a surface. Both are handled by re-declaring the dark tokens
+*on the element itself*, so every descendant (buttons, dots, hairlines, gold) falls back into
+dark mode with no per-component rules.
+
+The only things a token could not reach are the two decorative SVG hatches, which are white
+hairlines at 2% opacity: light mode inverts the layer rather than shipping a second asset.
+
+With JS off the button is hidden (`noscript.css`) instead of shipping a dead control.
 
 ---
 

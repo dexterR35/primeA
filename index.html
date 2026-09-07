@@ -15,7 +15,9 @@
 
 <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
 <meta name="author" content="Loja Privată">
-<meta name="color-scheme" content="dark">
+<!-- Both schemes are supported; assets/js/theme.js rewrites theme-color to
+     match whichever one is active. -->
+<meta name="color-scheme" content="dark light">
 <meta name="theme-color" content="#111220">
 <meta name="format-detection" content="telephone=no">
 
@@ -59,6 +61,15 @@
 <link rel="preload" as="image" href="assets/img/hero-mobile.png" media="(max-width: 767px)">
 
 <link rel="stylesheet" href="assets/css/style.css">
+
+<!-- Light theme. Entirely scoped to <html data-theme="light">, so it is inert
+     until the switch is thrown. Must come after style.css. -->
+<link rel="stylesheet" href="assets/css/theme-light.css">
+
+<!-- Render-blocking on purpose: this stamps data-theme on <html> before the
+     first paint, so a returning light-mode visitor never sees a dark flash.
+     It is a file rather than an inline script because of the CSP below. -->
+<script src="assets/js/theme.js"></script>
 
 <!-- Content Security Policy, enforced by the page itself.
      Everything the page needs is same-origin (fonts are self-hosted), so the
@@ -151,11 +162,29 @@
       </span>
     </a>
 
-    <!-- Opens the modal. The href stays a real anchor so it still works
-         if JS is unavailable - app.js calls preventDefault when it can
-         find the dialog. -->
-    <a class="btn btn--primary btn--md" href="#request"
-       data-modal-open="requestModal">Cere Accesul Acum</a>
+    <div class="site-header_actions">
+
+      <!-- Light / dark switch. The glyph shows the theme a click would give
+           you, so it reads as an action. theme.js keeps aria-label in step
+           with it; noscript.css hides the whole button when JS is off. -->
+      <button class="theme-toggle" type="button" data-theme-toggle
+              aria-label="Comută pe modul luminos" title="Comută pe modul luminos">
+        <svg class="theme-toggle_sun" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <circle cx="12" cy="12" r="4.2"/>
+          <path d="M12 2.4v2.3M12 19.3v2.3M4.2 4.2l1.6 1.6M18.2 18.2l1.6 1.6M2.4 12h2.3M19.3 12h2.3M4.2 19.8l1.6-1.6M18.2 5.8l1.6-1.6"/>
+        </svg>
+        <svg class="theme-toggle_moon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path d="M20.5 14.4A8.6 8.6 0 0 1 9.6 3.5a8.6 8.6 0 1 0 10.9 10.9Z"/>
+        </svg>
+      </button>
+
+      <!-- Opens the modal. The href stays a real anchor so it still works
+           if JS is unavailable - app.js calls preventDefault when it can
+           find the dialog. -->
+      <a class="btn btn--primary btn--md" href="#request"
+         data-modal-open="requestModal">Cere Accesul Acum</a>
+
+    </div>
 
   </div>
 </header>
@@ -552,7 +581,7 @@
 
     <button class="modal_close nav-btn" type="button" data-modal-close aria-label="Închide">
       <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-        <path d="M1 1L13 13M13 1L1 13" stroke="#F6F7F9" stroke-width="1.2" stroke-linecap="round"/>
+        <path d="M1 1L13 13M13 1L1 13" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
       </svg>
     </button>
 
