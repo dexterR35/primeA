@@ -6,7 +6,3 @@
 .hero_slide       { opacity: 1; }
 .hero_slide ~ .hero_slide { display: none; }   /* show the first slide only */
 .hero_controls    { display: none !important; }
-
-/* The theme switch needs JS to do anything at all - hide it rather than
-   ship a dead control. */
-.theme-toggle    { display: none !important; }

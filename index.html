@@ -4,10 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<!-- ─────────────────────────────────────────────────────────────────────────
-     BEFORE DEPLOY: replace every https://www.example.com with your real
-     origin (this file, sitemap.xml and robots.txt). Nothing else to change.
-     ───────────────────────────────────────────────────────────────────── -->
 
 <title>Loja Privată - Acces pe bază de recomandare</title>
 <meta name="description" content="Loja Privată nu se caută. Te găsește ea. Un spațiu discret, pentru cei recunoscuți, nu pentru toată lumea. Acces pe bază de recomandare.">
@@ -15,9 +11,7 @@
 
 <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
 <meta name="author" content="Loja Privată">
-<!-- Both schemes are supported; assets/js/theme.js rewrites theme-color to
-     match whichever one is active. -->
-<meta name="color-scheme" content="dark light">
+<meta name="color-scheme" content="dark">
 <meta name="theme-color" content="#111220">
 <meta name="format-detection" content="telephone=no">
 
@@ -47,9 +41,7 @@
 <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
 <link rel="manifest" href="site.webmanifest">
 
-<!-- Fonts - self-hosted, no third-party origin, no visitor IP sent to Google -->
-<!-- Variable fonts: 4 files carry every weight. ă ș ț live in latin-ext,
-     so Romanian copy needs that subset from the first paint too. -->
+
 <link rel="preload" as="font" type="font/woff2" href="assets/fonts/outfit-var-latin.woff2" crossorigin>
 <link rel="preload" as="font" type="font/woff2" href="assets/fonts/outfit-var-latin-ext.woff2" crossorigin>
 <link rel="preload" as="font" type="font/woff2" href="assets/fonts/inter-var-latin.woff2" crossorigin>
@@ -59,25 +51,9 @@
 <!-- Critical asset: the LCP hero image -->
 <link rel="preload" as="image" href="assets/img/hero-desktop.png" media="(min-width: 768px)">
 <link rel="preload" as="image" href="assets/img/hero-mobile.png" media="(max-width: 767px)">
-
 <link rel="stylesheet" href="assets/css/style.css">
 
-<!-- Light theme. Entirely scoped to <html data-theme="light">, so it is inert
-     until the switch is thrown. Must come after style.css. -->
-<link rel="stylesheet" href="assets/css/theme-light.css">
 
-<!-- Render-blocking on purpose: this stamps data-theme on <html> before the
-     first paint, so a returning light-mode visitor never sees a dark flash.
-     It is a file rather than an inline script because of the CSP below. -->
-<script src="assets/js/theme.js"></script>
-
-<!-- Content Security Policy, enforced by the page itself.
-     Everything the page needs is same-origin (fonts are self-hosted), so the
-     policy can stay strict without exceptions. If you later add an analytics
-     script or an external endpoint, widen script-src / connect-src here.
-     Note: frame-ancestors and HSTS are ignored in a <meta> tag - those two
-     only work as real response headers if you ever want clickjacking and
-     transport protection on top of this. -->
 <meta http-equiv="Content-Security-Policy" content="
   default-src 'self';
   base-uri 'self';
@@ -163,34 +139,13 @@
     </a>
 
     <div class="site-header_actions">
-
-      <!-- Light / dark switch. The glyph shows the theme a click would give
-           you, so it reads as an action. theme.js keeps aria-label in step
-           with it; noscript.css hides the whole button when JS is off. -->
-      <button class="theme-toggle" type="button" data-theme-toggle
-              aria-label="Comută pe modul luminos" title="Comută pe modul luminos">
-        <svg class="theme-toggle_sun" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-          <circle cx="12" cy="12" r="4.2"/>
-          <path d="M12 2.4v2.3M12 19.3v2.3M4.2 4.2l1.6 1.6M18.2 18.2l1.6 1.6M2.4 12h2.3M19.3 12h2.3M4.2 19.8l1.6-1.6M18.2 5.8l1.6-1.6"/>
-        </svg>
-        <svg class="theme-toggle_moon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-          <path d="M20.5 14.4A8.6 8.6 0 0 1 9.6 3.5a8.6 8.6 0 1 0 10.9 10.9Z"/>
-        </svg>
-      </button>
-
-      <!-- Opens the modal. The href stays a real anchor so it still works
-           if JS is unavailable - app.js calls preventDefault when it can
-           find the dialog. -->
       <a class="btn btn--primary btn--md" href="#request"
          data-modal-open="requestModal">Cere Accesul Acum</a>
-
     </div>
-
   </div>
 </header>
 
 <main id="main">
-
   <section class="hero" id="top" aria-roledescription="carousel" aria-label="Loja Privată">
     <div class="hero_stage" id="heroStage">
       <article class="hero_slide is-active" role="group" aria-roledescription="slide" aria-label="1 din 3">
@@ -221,7 +176,6 @@
       <article class="hero_slide" lang="en" role="group" aria-roledescription="slide" aria-label="2 din 3">
         <div class="hero_media">
           <picture>
-            <!-- portrait crop below 768 px: art direction, not resolution -->
             <source media="(max-width: 767px)" srcset="assets/img/hero-2-m.webp">
             <img src="assets/img/hero-2.webp" alt="Invitați urcând la bordul unui avion privat, în amurg" decoding="async">
           </picture>
@@ -246,7 +200,6 @@
       <article class="hero_slide" lang="en" role="group" aria-roledescription="slide" aria-label="3 din 3">
         <div class="hero_media">
           <picture>
-            <!-- portrait crop below 768 px: art direction, not resolution -->
             <source media="(max-width: 767px)" srcset="assets/img/hero-3-m.webp">
             <img src="assets/img/hero-3.webp" alt="Un plic de invitație sigilat cu ceară" decoding="async">
           </picture>
@@ -283,7 +236,6 @@
     </div>
   </section>
 
-  <!-- ========================================================== BENEFITS -->
   <section class="section section--benefits" id="benefits">
     <div class="container stack stack--xl">
 
@@ -332,7 +284,6 @@
     </div>
   </section>
 
-  <!-- ========================================================== PERKS -->
   <section class="section section--perks" id="perks">
     <div class="section_bleed" aria-hidden="true" data-bg></div>
 
@@ -384,7 +335,6 @@
     </div>
   </section>
 
-  <!-- ========================================================== CONCIERGE -->
   <section class="section section--concierge" id="concierge">
     <div class="container concierge">
 
@@ -455,7 +405,6 @@
     </div>
   </section>
 
-  <!-- ========================================================== REGISTRATION -->
   <section class="section section--registration" id="request">
     <div class="section_bleed" aria-hidden="true" data-bg></div>
 
@@ -478,16 +427,9 @@
           <span class="form-panel_ace form-panel_ace--br" aria-hidden="true">
             <img src="assets/svg/corner-ace-br.svg" alt="" width="9" height="21">
           </span>
-
-          <!-- action/method matter: without them a no-JS submit would GET this
-               page back with the applicant's name and email in the query
-               string - leaking PII into history, logs and Referer. -->
           <form class="form" id="requestForm"
                 action="/api/invitations" method="post"
                 autocomplete="on" novalidate>
-
-            <!-- Honeypot. Never shown, never announced, never focusable.
-                 Bots fill it; app.js and your server reject those. -->
             <div class="hp" aria-hidden="true">
               <label for="company">Companie</label>
               <input id="company" name="company" type="text"
@@ -516,9 +458,23 @@
             </div>
 
             <p class="consent">
-              Prin trimitere, accepți să fii contactat confidențial în legătură cu
-              accesul tău în Lojă.
+              Prin semnarea de mai jos, ești de acord ca Loja Privată să te
+              contacteze în legătură cu cererea ta. Citește
+              <a class="consent_link" href="#">Politica de Confidențialitate</a> și
+              <a class="consent_link" href="#">Termenii și Condițiile</a>.
             </p>
+
+            <div class="field">
+              <label class="field_label" for="signature">Semnătură</label>
+              <input class="field_input" id="signature" name="signature" type="text"
+                     autocomplete="name" placeholder="Scrie-ți numele complet pentru a semna"
+                     maxlength="80" minlength="2" spellcheck="false" required>
+              <p class="field_error" data-error-for="signature" hidden></p>
+              <div class="signature-meta">
+                <p class="signature-meta_note">Aceasta reprezintă semnătura ta electronică.</p>
+                <p class="signature-meta_date"></p>
+              </div>
+            </div>
 
             <button class="btn btn--primary btn--lg btn--block" type="submit">Cere Accesul Acum</button>
 
@@ -546,7 +502,6 @@
 
 </main>
 
-<!-- ============================================================ FOOTER -->
 <footer class="site-footer">
   <div class="container site-footer_inner">
 
@@ -569,13 +524,7 @@
   </div>
 </footer>
 
-<!-- ============================================================ MODAL
-     Reconstructed from the design system, not exported: the Figma frames
-     "Popup view/Desc." (97:619) and "Popup view/Mob" (97:888) sit behind a
-     rate limit. Their anatomy is known from the file metadata - the same
-     Background+Border+Shadow card, 560 px desktop / 361 px mobile, centred
-     over a dim, which is why the "Sended request" frames share those widths.
-     ================================================================= -->
+
 <dialog class="modal" id="requestModal" data-modal aria-labelledby="requestModalTitle">
   <div class="modal_panel">
 
@@ -607,8 +556,6 @@
                 action="/api/invitations" method="post"
                 autocomplete="on" novalidate>
 
-            <!-- Honeypot. Never shown, never announced, never focusable.
-                 Bots fill it; app.js and your server reject those. -->
             <div class="hp" aria-hidden="true">
               <label for="m-company">Companie</label>
               <input id="m-company" name="company" type="text"
@@ -637,9 +584,23 @@
             </div>
 
             <p class="consent">
-              Prin trimitere, accepți să fii contactat confidențial în legătură cu
-              accesul tău în Lojă.
+              Prin semnarea de mai jos, ești de acord ca Loja Privată să te
+              contacteze în legătură cu cererea ta. Citește
+              <a class="consent_link" href="#">Politica de Confidențialitate</a> și
+              <a class="consent_link" href="#">Termenii și Condițiile</a>.
             </p>
+
+            <div class="field">
+              <label class="field_label" for="m-signature">Semnătură</label>
+              <input class="field_input" id="m-signature" name="signature" type="text"
+                     autocomplete="name" placeholder="Scrie-ți numele complet pentru a semna"
+                     maxlength="80" minlength="2" spellcheck="false" required>
+              <p class="field_error" data-error-for="signature" hidden></p>
+              <div class="signature-meta">
+                <p class="signature-meta_note">Aceasta reprezintă semnătura ta electronică.</p>
+                <p class="signature-meta_date"></p>
+              </div>
+            </div>
 
             <button class="btn btn--primary btn--lg btn--block" type="submit">Cere Accesul Acum</button>
 

@@ -347,8 +347,8 @@
       var dateEl = form.querySelector('.signature-meta_date');
       var resetBtn = panel.querySelector('[data-form-reset]');
   
-      /* Optional: the concept's form has no signature line, so this element is
-         usually absent. Kept so re-adding the field needs no JS change. */
+      /* The signature block's electronic-signature date - stamped with today's
+         date on load so it reads as the moment the form is signed. */
       if (dateEl) {
         dateEl.textContent = new Date().toLocaleDateString('ro-RO', {
           day: 'numeric', month: 'long', year: 'numeric'
@@ -364,6 +364,11 @@
         email: function (v) {
           if (!v) return 'Te rugăm să îți scrii adresa de email.';
           if (!EMAIL_RE.test(v)) return 'Adresa de email nu pare validă.';
+          return '';
+        },
+        signature: function (v) {
+          if (!v) return 'Te rugăm să semnezi cu numele tău complet.';
+          if (v.length < 2) return 'Semnătura pare prea scurtă.';
           return '';
         }
       };
