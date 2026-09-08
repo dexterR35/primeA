@@ -6,3 +6,9 @@
 .hero_slide       { opacity: 1; }
 .hero_slide ~ .hero_slide { display: none; }   /* show the first slide only */
 .hero_controls    { display: none !important; }
+
+/* The request form is JS-only - it posts JSON to the Apps Script endpoint,
+   which a native form submit cannot produce. With JS off the button can only
+   lose what the visitor typed, so hide it and let the <noscript> note in the
+   form say what to do instead. */
+.form button[type="submit"] { display: none !important; }

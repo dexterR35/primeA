@@ -63,7 +63,7 @@
   style-src 'self';
   img-src 'self' data:;
   font-src 'self';
-  connect-src 'self';
+  connect-src 'self' https://script.google.com https://script.googleusercontent.com;
   manifest-src 'self';
   upgrade-insecure-requests">
 
@@ -428,8 +428,7 @@
             <img src="assets/svg/corner-ace-br.svg" alt="" width="9" height="21">
           </span>
           <form class="form" id="requestForm"
-                action="/api/invitations" method="post"
-                autocomplete="on" novalidate>
+                method="post" autocomplete="on" novalidate>
             <div class="hp" aria-hidden="true">
               <label for="company">Companie</label>
               <input id="company" name="company" type="text"
@@ -477,6 +476,11 @@
             </div>
 
             <button class="btn btn--primary btn--lg btn--block" type="submit">Cere Accesul Acum</button>
+
+            <noscript>
+              <p class="consent">Formularul are nevoie de JavaScript.
+                 Activează-l și reîncarcă pagina.</p>
+            </noscript>
 
             <p class="form_status" role="status" aria-live="polite"></p>
 
@@ -553,8 +557,7 @@
           </span>
 
           <form class="form" id="requestModalForm"
-                action="/api/invitations" method="post"
-                autocomplete="on" novalidate>
+                method="post" autocomplete="on" novalidate>
 
             <div class="hp" aria-hidden="true">
               <label for="m-company">Companie</label>
@@ -603,6 +606,11 @@
             </div>
 
             <button class="btn btn--primary btn--lg btn--block" type="submit">Cere Accesul Acum</button>
+
+            <noscript>
+              <p class="consent">Formularul are nevoie de JavaScript.
+                 Activează-l și reîncarcă pagina.</p>
+            </noscript>
 
             <p class="form_status" role="status" aria-live="polite"></p>
 

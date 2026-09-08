@@ -335,7 +335,83 @@
        ====================================================================== */
   
     var EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
-  
+
+    /* The Google Apps Script web app that writes each request into the
+       spreadsheet - paste the /exec URL from `Deploy > New deployment`.
+       See apps-script/README.md. Left empty, the form falls back to the
+       old local stub so the page still demos without a backend. */
+    var ENDPOINT = '';
+
+    /* Every check below is a courtesy to the visitor, not a defence: it
+       spares them a round trip for a typo. The Apps Script repeats all of
+       it server-side, because anything in this file can be bypassed by
+       anyone who opens devtools. */
+
+    var ERRORS = {
+      invalid_name:      'Numele nu pare valid. Folosește doar litere.',
+      invalid_email:     'Adresa de email nu pare validă.',
+      invalid_signature: 'Semnătura nu pare validă. Scrie-ți numele complet.',
+      token:             'Sesiunea a expirat. Reîncarcă pagina și încearcă din nou.',
+      busy:              'Primim multe cereri chiar acum. Te rugăm să revii în câteva minute.',
+      server:            'Ceva nu a funcționat. Te rugăm să încerci din nou.',
+      network:           'Conexiunea a eșuat. Verifică internetul și încearcă din nou.'
+    };
+
+    /* One-shot submit tokens. The endpoint burns each one on use, so the
+       page keeps exactly one in flight and starts fetching the next as
+       soon as it hands one out - a visitor can send a second request
+       without reloading. Shared by both copies of the form.
+
+       Primed on first interaction rather than on page load: a visitor who
+       never touches the form costs the endpoint nothing, and by the time
+       anyone has typed a name, an email and a signature the token is
+       comfortably past the server's minimum age. */
+    var tokens = (function () {
+      var pending = null;
+
+      function refresh() {
+        if (!ENDPOINT) return null;
+        pending = fetch(ENDPOINT + '?action=token', {
+          method: 'GET',
+          credentials: 'omit',
+          cache: 'no-store'
+        })
+          .then(function (r) { return r.json(); })
+          .then(function (data) { return data && data.ok ? data.token : ''; })
+          .catch(function () { return ''; });   // offline: submit reports it
+        return pending;
+      }
+
+      return {
+        prime: function () { if (!pending) refresh(); },
+        take: function () {
+          var current = pending;
+          pending = null;
+          refresh();
+          return current || pending || Promise.resolve('');
+        }
+      };
+    }());
+
+    function sendRequest(token, data, source) {
+      return fetch(ENDPOINT, {
+        method: 'POST',
+        credentials: 'omit',
+        /* text/plain keeps this a CORS "simple request", so the browser
+           sends no preflight - Apps Script cannot answer an OPTIONS. The
+           body is still JSON and the endpoint parses it as JSON. */
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({
+          fullName:  data.fullName,
+          email:     data.email,
+          signature: data.signature,
+          company:   data.company,
+          source:    source,
+          token:     token
+        })
+      }).then(function (r) { return r.json(); });
+    }
+
     /* Scoped to one panel so the page can host several copies of the form
        (the Registration section and the header modal) with no shared ids. */
     function initForm(form) {
@@ -346,7 +422,21 @@
       var status = form.querySelector('.form_status');
       var dateEl = form.querySelector('.signature-meta_date');
       var resetBtn = panel.querySelector('[data-form-reset]');
-  
+      var submitBtn = form.querySelector('button[type="submit"]');
+
+      /* Read from the markup rather than hard-coded, so the copy lives in
+         one place and both form instances restore their own label. */
+      var SUBMIT_LABEL = submitBtn ? submitBtn.textContent : '';
+
+      /* Which copy of the form this is - stored alongside the row so the
+         sheet shows where a request came from. The server only ever
+         accepts 'page' or 'modal'. */
+      var source = form.id === 'requestModalForm' ? 'modal' : 'page';
+
+      /* One fetch, on the first sign of a real visitor. */
+      form.addEventListener('focusin', function () { tokens.prime(); }, { once: true });
+      var retried = false;
+
       /* The signature block's electronic-signature date - stamped with today's
          date on load so it reads as the moment the form is signed. */
       if (dateEl) {
@@ -429,29 +519,51 @@
   
         if (status) status.textContent = '';
   
-        var submit = form.querySelector('button[type="submit"]');
-        if (submit) {
-          submit.disabled = true;
-          submit.textContent = 'Se trimite…';
+        if (submitBtn) {
+          submitBtn.disabled = true;
+          submitBtn.textContent = 'Se trimite…';
         }
   
-        /* --------------------------------------------------------------
-           STUB. Replace with a real request to the form's action:
-  
-             fetch(form.action, {
-               method: 'POST',
-               headers: { 'Content-Type': 'application/json',
-                          'X-CSRF-Token': csrfToken },
-               body: JSON.stringify(data)
-             }).then(...)
-  
-           The server MUST independently validate every field, reject a
-           non-empty `company`, and rate-limit by IP. Nothing on this page
-           is a security control - it can all be bypassed.
-           -------------------------------------------------------------- */
-        window.setTimeout(showSuccess, 700);
+        /* No endpoint configured yet: keep the original local demo. */
+        if (!ENDPOINT) { window.setTimeout(showSuccess, 700); return; }
+
+        data.company = pot ? pot.value : '';
+        retried = false;              // one retry per attempt, not per page
+
+        tokens.take()
+          .then(function (token) { return sendRequest(token, data, source); })
+          .then(function (result) {
+            if (result && result.ok) { showSuccess(); return; }
+
+            var code = result && result.error ? result.error : 'server';
+            /* A stale token is the one failure worth retrying silently -
+               it happens to anyone who leaves the tab open past the
+               token's 30-minute window. One retry, then give up. */
+            if (code === 'token' && !retried) {
+              retried = true;
+              /* The replacement token has to clear the server's minimum
+                 age before it is worth spending, hence the wait. */
+              return new Promise(function (resolve) { window.setTimeout(resolve, 1600); })
+                .then(function () { return tokens.take(); })
+                .then(function (token) { return sendRequest(token, data, source); })
+                .then(function (second) {
+                  if (second && second.ok) { showSuccess(); return; }
+                  fail(second && second.error ? second.error : 'server');
+                });
+            }
+            fail(code);
+          })
+          .catch(function () { fail('network'); });
       });
-  
+
+      function fail(code) {
+        if (status) status.textContent = ERRORS[code] || ERRORS.server;
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = SUBMIT_LABEL;
+        }
+      }
+
       function showSuccess() {
         form.hidden = true;
         if (!done) return;
@@ -467,10 +579,9 @@
         resetBtn.addEventListener('click', function () {
           form.reset();
           Object.keys(rules).forEach(function (name) { showError(name, ''); });
-          var submit = form.querySelector('button[type="submit"]');
-          if (submit) {
-            submit.disabled = false;
-            submit.textContent = 'Cere Accesul Acum';
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = SUBMIT_LABEL;
           }
           if (done) done.hidden = true;
           form.hidden = false;
