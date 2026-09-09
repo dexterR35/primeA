@@ -56,7 +56,7 @@ var LIMITS = {
 
 /* ----------------------------------------------------------------------
    Signing key. Generated once, on demand, and kept in Script Properties —
-   never in this file, so the source can be shared or committed safely.
+   never in this file, so the code can be shared or committed safely.
    ---------------------------------------------------------------------- */
 function getSigningKey_() {
   var props = PropertiesService.getScriptProperties();
