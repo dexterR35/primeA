@@ -90,12 +90,7 @@ actually defended" has a test.
 
 The `primeA` tab, one row per request — four columns:
 
-`Received At · Full Name · Email · Status`
-
-The form also has a **Semnătură** field. The server validates it (must be
-present and name-shaped) but does not store it — it only ever repeats the full
-name, so the sheet would hold the same value twice. It is the consent gesture,
-not a separate piece of data.
+`Received At · Full Name · Signature · Email`
 
 `Received At` is stamped from the server clock at the moment the submit is
 processed, formatted `yyyy-MM-dd'T'HH:mm:ssXXX` in the script's timezone. Every
@@ -103,16 +98,19 @@ cell is written as literal text (leading apostrophe), so `Received At` is text,
 not a real date — it still sorts chronologically as a string; add a helper
 column with `=DATEVALUE()` only if you need date maths or range filters.
 
-`Status` starts at `Nou` and is yours to work in — the script only ever appends,
-it never rewrites an existing row, so nothing you type in the sheet can be
-clobbered by a submit. It does read the `Email` column (column 3) once per
-submit to reject a repeat address (see "Enumeration" below).
+`Signature` is the visitor's typed consent gesture; in practice it repeats the
+full name.
 
-The script writes and reads by **column position**, not header text: keep the
-four columns in this order. Adding, removing or reordering a column silently
-sends new rows to the wrong fields. Sorting rows and editing `Status` are fine.
-Other tabs in the file are never touched, and the tab is found by name, so
-reordering the tabs cannot redirect submissions.
+The script only ever appends, it never rewrites an existing row, so nothing you
+add to the sheet can be clobbered by a submit — e.g. a `Status` column in
+column E is safe, the script writes A–D and never touches it. The duplicate
+check reads the `Email` column (**column 4**) once per submit.
+
+The script writes and reads by **column position**, not header text: keep these
+four columns in this order. Adding, removing or reordering one of them silently
+sends new rows to the wrong fields (a fifth column further right is fine).
+Sorting rows is fine. Other tabs in the file are never touched, and the tab is
+found by name, so reordering the tabs cannot redirect submissions.
 
 ## What is actually defended, and what isn't
 

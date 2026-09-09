@@ -52,8 +52,11 @@ const before = h.rows.length;
 const ok = submit();
 check('accepts a valid request', ok.ok === true);
 check('appends exactly one row', h.rows.length === before + 1);
-check('row has the name', h.lastRow()[1] === 'Ana Maria Popescu');
-check('row status is Nou', h.lastRow()[3] === 'Nou');
+check('row order is Received At, Full Name, Signature, Email',
+  h.lastRow()[1] === 'Ana Maria Popescu' &&
+  h.lastRow()[2] === 'Ana Maria Popescu' &&
+  h.lastRow()[3].indexOf('@example.com') !== -1);
+check('row has four columns', h.lastRow().length === 4);
 
 console.log('\nformula / CSV injection');
 for (const payload of [
@@ -107,7 +110,7 @@ check('strips zero-width characters',
 check('collapses whitespace',
   submit({ fullName: '  Ana   Popescu  ' }).ok === true && h.lastRow()[1] === 'Ana Popescu');
 check('lowercases the email',
-  submit({ email: 'MiXeD@Example.COM' }).ok === true && h.lastRow()[2] === 'mixed@example.com');
+  submit({ email: 'MiXeD@Example.COM' }).ok === true && h.lastRow()[3] === 'mixed@example.com');
 
 console.log('\nhoneypot');
 const rowsBefore = h.rows.length;

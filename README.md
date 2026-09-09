@@ -91,8 +91,8 @@ modal) collects *Nume complet*, *Adresă de email* and a *Semnătură* input bel
 line, with the "electronic signature" helper note and a date stamped by `app.js` on load
 (`.signature-meta_date`). The `fullName`, `email` and `signature` rules live in `rules` in
 `app.js`; `readValues()` derives its shape from `rules`, so each field validates, clears on
-edit and blocks submit. The server validates the signature too, but **does not store it** —
-it only repeats the full name. The sheet holds `Received At · Full Name · Email · Status`.
+edit and blocks submit. The server re-validates all three. The sheet holds four columns:
+`Received At · Full Name · Signature · Email`.
 
 **Section 2 has a fourth item with nowhere to go.** *„Ochi Puțini, Exclusivitate Garantată -
 Ce e al tău, rămâne doar al tău."* The Perks row is three photo cards in Figma, so the first

