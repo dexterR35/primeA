@@ -76,7 +76,7 @@ lose. The URL itself is stable across new versions of the same deployment.
 ## Tests
 
 ```sh
-node apps-script/test/test.js      # 67 checks, no dependencies
+node apps-script/test/test.js      # 62 checks, no dependencies
 ```
 
 `test/harness.js` loads `Code.gs` into a VM context with stubbed
@@ -88,22 +88,26 @@ actually defended" has a test.
 
 ## The sheet
 
-The `primeA` tab, one row per request:
+The `primeA` tab, one row per request — four columns:
 
-`Received At · Full Name · Email · Signature · Signed On · Request ID · Source · Status`
+`Received At · Full Name · Email · Status`
 
 `Received At` is stamped from the server clock at the moment the submit is
 processed, formatted `yyyy-MM-dd'T'HH:mm:ssXXX` in the script's timezone. Every
-cell is written as literal text (leading apostrophe), so the timestamp columns
-are text, not real dates — add a helper column with `=DATEVALUE()` if you need
-to sort or filter them by date.
+cell is written as literal text (leading apostrophe), so `Received At` is text,
+not a real date — it still sorts chronologically as a string; add a helper
+column with `=DATEVALUE()` only if you need date maths or range filters.
 
 `Status` starts at `Nou` and is yours to work in — the script only ever appends,
 it never rewrites an existing row, so nothing you type in the sheet can be
-clobbered by a submit. It does read the `Email` column once per submit to reject
-a repeat address (see "Enumeration" below). Other tabs in the same file are
-never touched; looking the tab up by name rather than by position means
-reordering the tabs cannot redirect submissions somewhere else.
+clobbered by a submit. It does read the `Email` column (column 3) once per
+submit to reject a repeat address (see "Enumeration" below).
+
+The script writes and reads by **column position**, not header text: keep the
+four columns in this order. Adding, removing or reordering a column silently
+sends new rows to the wrong fields. Sorting rows and editing `Status` are fine.
+Other tabs in the file are never touched, and the tab is found by name, so
+reordering the tabs cannot redirect submissions.
 
 ## What is actually defended, and what isn't
 

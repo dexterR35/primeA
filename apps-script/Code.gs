@@ -232,13 +232,11 @@ function validateSubmission_(body) {
      the bot what to change. Code.gs turns this into a fake success. */
   if (clean_(body.company) !== '') return { ok: false, error: 'honeypot' };
 
-  var fullName  = validateName_(body.fullName);
-  var signature = validateName_(body.signature);
-  var email     = validateEmail_(body.email);
+  var fullName = validateName_(body.fullName);
+  var email    = validateEmail_(body.email);
 
-  if (!fullName)  return { ok: false, error: 'invalid_name' };
-  if (!email)     return { ok: false, error: 'invalid_email' };
-  if (!signature) return { ok: false, error: 'invalid_signature' };
+  if (!fullName) return { ok: false, error: 'invalid_name' };
+  if (!email)    return { ok: false, error: 'invalid_email' };
 
   var now = new Date();
   var tz  = Session.getScriptTimeZone();
@@ -248,11 +246,7 @@ function validateSubmission_(body) {
     record: {
       receivedAt: Utilities.formatDate(now, tz, "yyyy-MM-dd'T'HH:mm:ssXXX"),
       fullName:   fullName,
-      email:      email,
-      signature:  signature,
-      signedOn:   Utilities.formatDate(now, tz, 'yyyy-MM-dd'),
-      requestId:  Utilities.getUuid(),
-      source:     body.source === 'modal' ? 'modal' : 'page'
+      email:      email
     }
   };
 }
@@ -279,10 +273,6 @@ var COLUMNS = [
   'Received At',    // server clock, ISO 8601 — never trust a client timestamp
   'Full Name',
   'Email',
-  'Signature',
-  'Signed On',      // the date the signature block showed the visitor
-  'Request ID',
-  'Source',         // 'page' | 'modal' — which copy of the form
   'Status'          // workflow column for whoever reviews the requests
 ];
 
@@ -322,10 +312,10 @@ function ensureHeader_(sheet) {
   sheet.setFrozenRows(1);
 
   // Widen the columns people actually read.
-  sheet.setColumnWidth(1, 170);
-  sheet.setColumnWidth(2, 200);
-  sheet.setColumnWidth(3, 240);
-  sheet.setColumnWidth(4, 200);
+  sheet.setColumnWidth(1, 170);   // Received At
+  sheet.setColumnWidth(2, 200);   // Full Name
+  sheet.setColumnWidth(3, 240);   // Email
+  sheet.setColumnWidth(4, 90);    // Status
 }
 
 /* ----------------------------------------------------------------------
@@ -374,10 +364,6 @@ function writeRow(record) {
       asLiteralText_(record.receivedAt),
       asLiteralText_(record.fullName),
       asLiteralText_(record.email),
-      asLiteralText_(record.signature),
-      asLiteralText_(record.signedOn),
-      asLiteralText_(record.requestId),
-      asLiteralText_(record.source),
       asLiteralText_('Nou')
     ];
 
@@ -493,9 +479,7 @@ function selfTest() {
   ];
 
   probes.forEach(function (probe) {
-    var checked = validateSubmission_({
-      fullName: probe, email: 'probe@example.com', signature: probe
-    });
+    var checked = validateSubmission_({ fullName: probe, email: 'probe@example.com' });
     if (checked.ok) throw new Error('validation let a formula through: ' + probe);
   });
 
@@ -504,11 +488,7 @@ function selfTest() {
   var written = writeRow({
     receivedAt: new Date().toISOString(),
     fullName:   'Test Ionescu',
-    email:      'test+' + Date.now() + '@example.com',
-    signature:  'Test Ionescu',
-    signedOn:   '2026-01-01',
-    requestId:  Utilities.getUuid(),
-    source:     'selftest'
+    email:      'test+' + Date.now() + '@example.com'
   });
 
   console.log(written

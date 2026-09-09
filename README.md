@@ -86,14 +86,12 @@ JSON-LD and the manifest.
 slide 1. The other two keep their placeholder English copy and carry `lang="en"` so screen
 readers switch voice. Replace them in `index.html` and drop that attribute.
 
-**The form carries a signature field.** Below the consent line each form copy (Registration
-section and modal) has a *Semnătură* input - `.field--signature`, placeholder *Scrie-ți
-numele complet pentru a semna* - with the "electronic signature" helper note and an
-auto-filled date (`.signature-meta_date`, stamped by `app.js` on load). The matching
-`signature` rule lives in `rules` in `app.js`; `readValues()` derives its shape from
-`rules`, so the field validates, clears on edit and blocks submit like the others. The same
-block is echoed read-only in the footer (`.site-footer_sign`); its date is stamped by
-`stampSignatureDates()`.
+**The form has two fields: name and email.** Each copy (Registration section and modal)
+collects *Nume complet* and *Adresă de email*, with a plain consent line above the button
+(*„Prin trimiterea acestei cereri, ești de acord…"*) — submitting is the consent, there is
+no separate signature field or checkbox. The `fullName` and `email` rules live in `rules`
+in `app.js`; `readValues()` derives its shape from `rules`, so each field validates, clears
+on edit and blocks submit. The sheet stores `Received At · Full Name · Email · Status`.
 
 **Section 2 has a fourth item with nowhere to go.** *„Ochi Puțini, Exclusivitate Garantată -
 Ce e al tău, rămâne doar al tău."* The Perks row is three photo cards in Figma, so the first
@@ -198,8 +196,8 @@ Only what a static page can meaningfully do itself. Everything real happens on y
 
 **Form target.** `<form action="/api/invitations" method="post">`. This is not cosmetic: a
 form with no `action` resolves to a **GET against the current URL**, so if JS is disabled or
-`app.js` fails to load, submitting-would reload the page with
-`?fullName=…&email=…&signature=…` - leaking personal data into the address bar, browser
+`app.js` fails to load, submitting would reload the page with
+`?fullName=…&email=…` - leaking personal data into the address bar, browser
 history, `Referer` headers and server logs. Point the action at your real endpoint.
 -
 **Honeypot.** A `#company` field positioned off-screen (not `display:none` - some bots skip
@@ -330,8 +328,8 @@ a second theme would only need to redefine the token block, but none ships.
 - **Lazy media** - observer-driven images and backdrops (see above).
 - **Scroll reveal** - one-shot, through the same observer helper.
 - **Request form** - instance-scoped, so the section form and the modal form run the same
-  code. Inline validation in Romanian (name, email format, signature), errors clear on input,
-  honeypot, auto-stamped signature date, success state.
+  code. Inline validation in Romanian (name, email format), errors clear on input,
+  honeypot, single-use token, success state.
 - **Modal** - `<dialog>`-based, close-button-only dismissal, scroll lock (see below).
 
 ### The request modal-
@@ -370,7 +368,7 @@ explicitly. Two details make that jump silent rather than a visible trip across 
 **Two forms, one behaviour.** The page carries two copies of the form: one in the Registration
 section, one in the modal. The modal's copy prefixes its ids with `m-` so nothing collides.
 `initForm(form)` is scoped to a single form element - it resolves `.form-done`,
-`.form__status`, `.signature-meta__date` and `[data-form-reset]` relatively, so
+`.form_status` and `[data-form-reset]` relatively, so
 `document.querySelectorAll('form.form').forEach(initForm)` wires up any number of copies.
 Error slots stay keyed by field **name** (`data-error-for="email"`), never by id, so they are
 shared across copies unchanged.

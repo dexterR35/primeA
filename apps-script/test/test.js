@@ -25,7 +25,6 @@ function submit(over = {}, ageMs = 5000) {
   return post(Object.assign({
     fullName: 'Ana Maria Popescu',
     email: 'ana' + Math.random().toString(36).slice(2, 8) + '@example.com',
-    signature: 'Ana Maria Popescu',
     token: freshToken(ageMs)
   }, over));
 }
@@ -44,8 +43,7 @@ check('setup writes the header row', h.rows.length === 1 && h.rows[0][0] === 'Re
 check('setup is idempotent', (S.setup(), h.rows.length === 1));
 check('...and does not create a second tab', book.inserted.length === 1);
 check('a submit reuses the same tab',
-  (S.writeRow({ receivedAt: 'x', fullName: 'Tab Test', email: 'a@b.co',
-                signature: 'x', signedOn: 'x', requestId: 'x', source: 'x' }),
+  (S.writeRow({ receivedAt: 'x', fullName: 'Tab Test', email: 'a@b.co' }),
    book.inserted.length === 1 && Object.keys(book.tabs).length === 1));
 
 console.log('\nhappy path');
@@ -54,11 +52,7 @@ const ok = submit();
 check('accepts a valid request', ok.ok === true);
 check('appends exactly one row', h.rows.length === before + 1);
 check('row has the name', h.lastRow()[1] === 'Ana Maria Popescu');
-check('row status is Nou', h.lastRow()[7] === 'Nou');
-check('source defaults to page', h.lastRow()[6] === 'page');
-check('source honours modal', submit({ source: 'modal' }).ok && h.lastRow()[6] === 'modal');
-check('source rejects anything else',
-  submit({ source: '=EVIL()' }).ok && h.lastRow()[6] === 'page');
+check('row status is Nou', h.lastRow()[3] === 'Nou');
 
 console.log('\nformula / CSV injection');
 for (const payload of [
@@ -70,15 +64,12 @@ for (const payload of [
 ]) {
   const r = submit({ fullName: payload });
   check('rejects in name: ' + payload.slice(0, 28), r.ok === false && r.error === 'invalid_name');
-  const r2 = submit({ signature: payload });
-  check('rejects in signature: ' + payload.slice(0, 24), r2.ok === false && r2.error === 'invalid_signature');
 }
 /* Even if a payload ever reaches writeRow, the apostrophe must neutralise it —
    the sheet stub throws if a raw formula lands in a cell. */
 let neutralised = true;
 try {
-  S.writeRow({ receivedAt: 'x', fullName: '=EVIL()', email: 'inert-probe@example.com',
-               signature: '+1', signedOn: 'x', requestId: 'x', source: '@x' });
+  S.writeRow({ receivedAt: '+1', fullName: '=EVIL()', email: 'inert-probe@example.com' });
 } catch (e) { neutralised = false; }
 check('writeRow stores formulas as inert text', neutralised);
 check('...and reads back unchanged', h.lastRow()[1] === '=EVIL()');
