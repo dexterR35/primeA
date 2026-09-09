@@ -30,11 +30,15 @@ function submit(over = {}, ageMs = 5000) {
   }, over));
 }
 
+/* Lift the rate ceiling out of the way for the rest of the suite; the
+   dedicated section below lowers it on purpose. */
+S.RATE_MAX = 1e9;
+
 console.log('\nsetup');
 const book = S.SpreadsheetApp.getActive();
 S.setup();
-check('creates the Invitations tab when it is missing',
-  !!book.getSheetByName('Invitations'));
+check('creates the target tab when it is missing',
+  !!book.getSheetByName('primeA'));
 check('...as the first tab', book.inserted.length === 1 && book.inserted[0].index === 0);
 check('setup writes the header row', h.rows.length === 1 && h.rows[0][0] === 'Received At');
 check('setup is idempotent', (S.setup(), h.rows.length === 1));
@@ -73,7 +77,7 @@ for (const payload of [
    the sheet stub throws if a raw formula lands in a cell. */
 let neutralised = true;
 try {
-  S.writeRow({ receivedAt: 'x', fullName: '=EVIL()', email: 'a@b.co',
+  S.writeRow({ receivedAt: 'x', fullName: '=EVIL()', email: 'inert-probe@example.com',
                signature: '+1', signedOn: 'x', requestId: 'x', source: '@x' });
 } catch (e) { neutralised = false; }
 check('writeRow stores formulas as inert text', neutralised);
@@ -130,22 +134,22 @@ const second = submit({ token: reused });
 check('accepts a token once', first.ok === true);
 check('rejects the replay', second.ok === false && second.error === 'token');
 
-console.log('\nrate limiting');
+console.log('\nduplicate guard');
 const addr = 'repeat@example.com';
 const r1 = submit({ email: addr });
 const rowsAfterFirst = h.rows.length;
 const r2 = submit({ email: addr });
 check('first submit from an address is stored', r1.ok === true);
-check('second submit answers ok (no enumeration oracle)', r2.ok === true);
-check('...but writes no second row', h.rows.length === rowsAfterFirst);
-
-h.cache.clear();
-let blocked = 0;
-for (let i = 0; i < 130; i++) {
-  const r = submit({ email: 'flood' + i + '@example.com' });
-  if (r.error === 'busy') blocked++;
-}
-check('global ceiling trips after ~120/h', blocked > 0 && blocked <= 12);
+check('second submit from the same address is rejected',
+  r2.ok === false && r2.error === 'duplicate');
+check('...and writes no second row', h.rows.length === rowsAfterFirst);
+check('the match ignores case',
+  submit({ email: addr.toUpperCase() }).error === 'duplicate');
+check('a different address still gets through',
+  submit({ email: 'someone-else@example.com' }).ok === true);
+check('a high volume of distinct addresses all write',
+  Array.from({ length: 60 }, (_, i) =>
+    submit({ email: 'vol' + i + '@example.com' }).ok).every(Boolean));
 
 console.log('\nGET route');
 const tok = JSON.parse(S.doGet({ parameter: { action: 'token' } }).getContent());
@@ -161,6 +165,18 @@ const shapes = new Set();
 [submit({ fullName: '' }), submit({ token: 'x' }), post(null)].forEach(r =>
   shapes.add(Object.keys(r).sort().join()));
 check('failures share one shape', shapes.size === 1 && shapes.has('error,ok'));
+
+console.log('\nrate limit');
+h.cache.clear();
+S.RATE_MAX = 5;
+const rl = Array.from({ length: 8 }, (_, i) =>
+  submit({ email: 'rl' + i + '@example.com' }));
+check('lets through up to the ceiling', rl.slice(0, 5).every(r => r.ok === true));
+check('answers busy past the ceiling', rl.slice(5).every(r => r.error === 'busy'));
+check('a blocked submit writes no row',
+  (n => { const before = h.rows.length; submit({ email: 'rl-x@example.com' }); return h.rows.length === before; })());
+S.RATE_MAX = 1e9;
+h.cache.clear();
 
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);

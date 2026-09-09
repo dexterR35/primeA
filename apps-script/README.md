@@ -1,17 +1,17 @@
 # Request form → Google Sheets
 
 The backend for the "Cere Accesul În Lojă" form. A Google Apps Script web app
-receives each request and appends one row to the **Invitations** tab of a
+receives each request and appends one row to the **primeA** tab of a
 spreadsheet.
 
 ```
 index.html  ──POST JSON──▶  Apps Script web app  ──▶  Spreadsheet
-(assets/js/app.js)              Code.gs                  "Invitations" tab
+(assets/js/app.js)              Code.gs                  "primeA" tab
 ```
 
 | File | What it does |
 | --- | --- |
-| `Code.gs` | The whole endpoint, in five sections: limits and keys · tokens and rate limiting · input validation · the sheet · the two web-app routes. |
+| `Code.gs` | The whole endpoint, in five sections: limits and keys · tokens · input validation · the sheet · the two web-app routes. |
 | `appsscript.json` | Manifest — pins the runtime, the single OAuth scope and the web-app access. |
 | `test/` | Runs `Code.gs` under Node against stubbed Google services. |
 
@@ -22,11 +22,12 @@ second thing to keep in sync.
 ## Setup
 
 1. **Create the spreadsheet.** Nothing to set up inside it: the script looks for
-   a tab named `Invitations` and creates it, first in the tab order, if it is
-   not there. The header row is written on the first run. If you would rather
-   the tab were called something else, change `SHEET_NAME` at the top of
-   section 4 and rename the tab to match — the script finds it by name, so the
-   two have to agree.
+   a tab named `primeA` and creates it, first in the tab order, if it is not
+   there. The header row is written on the first run. The tab name lives in
+   `SHEET_NAME` at the top of section 4 — if you change it there, rename the tab
+   in the spreadsheet to match, because the script finds it by name and the two
+   have to agree. Start with an empty tab: `ensureHeader_` only writes the
+   header row when the tab has no rows yet.
 
 2. **Open the bound editor** from that spreadsheet: **Extensions ▸ Apps Script**.
    Bound, not standalone: it is what keeps the OAuth scope down to
@@ -75,7 +76,7 @@ lose. The URL itself is stable across new versions of the same deployment.
 ## Tests
 
 ```sh
-node apps-script/test/test.js      # 61 checks, no dependencies
+node apps-script/test/test.js      # 67 checks, no dependencies
 ```
 
 `test/harness.js` loads `Code.gs` into a VM context with stubbed
@@ -87,15 +88,22 @@ actually defended" has a test.
 
 ## The sheet
 
-The `Invitations` tab, one row per request:
+The `primeA` tab, one row per request:
 
 `Received At · Full Name · Email · Signature · Signed On · Request ID · Source · Status`
 
+`Received At` is stamped from the server clock at the moment the submit is
+processed, formatted `yyyy-MM-dd'T'HH:mm:ssXXX` in the script's timezone. Every
+cell is written as literal text (leading apostrophe), so the timestamp columns
+are text, not real dates — add a helper column with `=DATEVALUE()` if you need
+to sort or filter them by date.
+
 `Status` starts at `Nou` and is yours to work in — the script only ever appends,
-it never reads or rewrites an existing row, so nothing you type in the sheet can
-be clobbered by a submit. Other tabs in the same file are never touched; looking
-the tab up by name rather than by position means reordering the tabs cannot
-redirect submissions somewhere else.
+it never rewrites an existing row, so nothing you type in the sheet can be
+clobbered by a submit. It does read the `Email` column once per submit to reject
+a repeat address (see "Enumeration" below). Other tabs in the same file are
+never touched; looking the tab up by name rather than by position means
+reordering the tabs cannot redirect submissions somewhere else.
 
 ## What is actually defended, and what isn't
 
@@ -117,15 +125,29 @@ to. Instead a submit must carry a token issued by a prior `GET`, HMAC-signed,
 valid between 1.2 seconds and 30 minutes old, and burned on first use. It stops
 replayed requests and naive automation. It is not authentication.
 
-**Flooding.** One submit per address per 15 minutes, five per 6 hours, 120 per
-hour across the whole endpoint. Apps Script exposes no client IP, so the
-per-address key is a hash of the email — the cache is not a place for personal
-data.
+**Flooding.** One global rate limit — `RATE_MAX` submits (default 300) in any
+rolling `RATE_WINDOW_MS` (default 1 hour) across the whole endpoint. Apps Script
+has no client IP, so this is not per-visitor; it is a ceiling that keeps one bad
+hour from spending the day's execution quota and taking the form down for
+everyone. Normal traffic (~1000/day, well under 300 in any hour for this form)
+never reaches it; past it, submits get `busy` until the window rolls forward.
+The window is counted from real timestamps held in the cache, not a fixed clock
+bucket. Tune the two constants at the top of section 2.
 
-**Enumeration.** A repeat address gets the same success response a new one does.
-Answering "that address already applied" would turn the form into a
-membership-checking oracle, and a member who submits twice should not see an
-error either way.
+The token still does its share on top: a submit needs a `GET` first, the token
+cannot be spent for 1.2 s, and it is burned on use. A determined attacker
+rotating fake addresses can still push rows in under the rate ceiling, so
+**treat every row as unverified until a human confirms it.** If bot rows become
+a real problem, the next step is a CAPTCHA (Cloudflare Turnstile) verified
+inside `doPost`; it is not wired up here.
+
+**Enumeration — a deliberate trade.** A repeat address is rejected with
+`error: 'duplicate'` so the visitor is told they have already applied. The cost:
+anyone can type an address into the form and learn from the response whether it
+is on the list. For an invitation-only list that is a real disclosure. It is
+slowed by the token (one probe per ~1.5 s) but not closed. To close it, drop the
+`emailExists_` check in `writeRow` and go back to answering every submit with
+success.
 
 **Bots.** The hidden `company` field is checked server-side as well as in the
 page; a filled one gets a success response and no row.
@@ -136,10 +158,8 @@ console (Executions), where only you can read them.
 
 Not defended, and worth being clear about: the endpoint is public by design.
 Anyone who reads `app.js` has the URL and can post a plausible-looking request
-that passes every check. **Treat every row as unverified until a human confirms
-it.** If that ever stops being acceptable, the next step is a CAPTCHA
-(Turnstile or reCAPTCHA v3) verified inside `doPost` — the token plumbing in
-section 2 is where it would go.
+that passes every check, up to the rate ceiling. **Treat every row as unverified
+until a human confirms it.**
 
 ## Data protection
 

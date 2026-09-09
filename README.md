@@ -245,7 +245,10 @@ through `textContent`, and there is no `innerHTML`, `insertAdjacentHTML`, `docum
 `eval` anywhere in the shipped code. Keep it that way if you start echoing the applicant's
 name back.
 
-Your server still owns: field validation, the honeypot check, per-IP rate limiting and CSRF.
+Your server still owns: field validation, the honeypot check, single-use submit tokens, the
+duplicate-address check and a global rate limit. See `apps-script/README.md` for what each
+one does and does not stop (Apps Script has no client IP, so the rate limit is one endpoint-
+wide ceiling, not per-visitor).
 
 ---
 _

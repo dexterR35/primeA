@@ -2,17 +2,22 @@
    Loja Privata - request form endpoint
    ----------------------------------------------------------------------
    A Google Apps Script web app: it receives one request from the form in
-   index.html and appends one row to the "Invitations" tab of this
-   spreadsheet.
+   index.html and appends one row to the "primeA" tab of this spreadsheet.
 
    Two routes, and nothing else is reachable from the internet:
 
      GET  ?action=token   -> a single-use submit token
-     POST (JSON body)     -> validate, throttle, append one row
+     POST (JSON body)     -> validate, rate-limit, reject a repeat address,
+                             append one row
 
-   There is no read route. The endpoint can only ever add a row; it cannot
-   list, search or return anything already stored, so a hostile caller has
-   no way to pull the membership list back out.
+   No public read route: the POST checks the Email column to reject an
+   address that has already applied, but it never returns what it found -
+   a caller learns yes/no for one address at a time, not the list itself.
+
+   Abuse controls: a single-use HMAC token (a submit must follow a real
+   GET) and one global rate limit (a ceiling on writes per rolling hour
+   for the whole endpoint, so one bad hour cannot burn the day's Apps
+   Script quota). No CAPTCHA, no per-visitor tracking.
 
    This script is CONTAINER-BOUND: create it from the spreadsheet itself
    (Extensions > Apps Script). That is what keeps the only OAuth scope it
@@ -46,10 +51,7 @@ var LIMITS = {
   nameMax:        80,
   emailMax:       254,    // RFC 5321 maximum
   tokenMinAgeMs:  1200,   // a human cannot load and submit faster than this
-  tokenMaxAgeMs:  30 * 60 * 1000,
-  perEmailSec:    900,    // one submit per address per 15 min
-  perEmailBurst:  5,      // ...and at most 5 per 6 h
-  globalPerHour:  120     // circuit breaker for the whole endpoint
+  tokenMaxAgeMs:  30 * 60 * 1000
 };
 
 /* ----------------------------------------------------------------------
@@ -83,17 +85,8 @@ function safeEquals_(a, b) {
   return diff === 0;
 }
 
-function sha256Hex_(message) {
-  var bytes = Utilities.computeDigest(
-    Utilities.DigestAlgorithm.SHA_256, message, Utilities.Charset.UTF_8
-  );
-  return bytes.map(function (b) {
-    return ('0' + (b & 0xff).toString(16)).slice(-2);
-  }).join('');
-}
-
 /* ======================================================================
-   2. TOKENS AND RATE LIMITING
+   2. TOKENS AND THE RATE LIMIT
    ====================================================================== */
 
 /* ----------------------------------------------------------------------
@@ -142,34 +135,41 @@ function consumeToken_(token) {
 }
 
 /* ----------------------------------------------------------------------
-   Rate limiting. Apps Script exposes no client IP, so the throttle keys
-   off the submitted address (hashed - the cache is not the place for
-   personal data) plus a global counter that caps total damage.
+   Rate limit. Apps Script exposes no client IP, so this is ONE ceiling
+   for the whole endpoint, not a per-visitor limit: at most RATE_MAX
+   submits in any rolling RATE_WINDOW_MS. Real traffic (~1000/day, well
+   under 300 in any single hour for this form) never reaches it; a flood
+   hits the ceiling and gets 'busy' until the window rolls forward, which
+   stops one bad hour from spending the day's execution quota.
 
-   Returns 'ok', 'repeat' (this address submitted recently or too often)
-   or 'global' (the whole endpoint is over its hourly ceiling). Code.gs
-   answers 'repeat' with a normal success page: telling a caller "that
-   address already applied" turns the form into an address-checking
-   oracle, and a member who submits twice should not see an error.
+   The window is measured from real timestamps, not a fixed clock bucket:
+   the cache holds the epoch-ms of recent submits and each call drops the
+   ones that have aged past the window before counting. Nothing to reset,
+   nothing to time a burst against.
+
+   The read-then-write is not atomic, so a simultaneous burst can slip a
+   few past RATE_MAX. That is fine - this is a safety ceiling, not an
+   exact quota.
    ---------------------------------------------------------------------- */
-function rateLimitCheck_(email) {
-  var cache = CacheService.getScriptCache();
-  var id = sha256Hex_(email.toLowerCase()).slice(0, 32);
+var RATE_MAX = 300;
+var RATE_WINDOW_MS = 60 * 60 * 1000;   // one hour
 
-  if (cache.get('cool:' + id)) return 'repeat';
+function rateLimitOk_() {
+  var cache  = CacheService.getScriptCache();
+  var now    = Date.now();
+  var cutoff = now - RATE_WINDOW_MS;
 
-  var burstKey = 'burst:' + id;
-  var burst = Number(cache.get(burstKey) || 0);
-  if (burst >= LIMITS.perEmailBurst) return 'repeat';
+  var recent = [];
+  (cache.get('rate') || '').split(',').forEach(function (s) {
+    var t = Number(s);
+    if (t >= cutoff) recent.push(t);
+  });
 
-  var hourKey = 'global:' + Math.floor(Date.now() / 3600000);
-  var hits = Number(cache.get(hourKey) || 0);
-  if (hits >= LIMITS.globalPerHour) return 'global';
+  if (recent.length >= RATE_MAX) return false;
 
-  cache.put('cool:' + id, '1', LIMITS.perEmailSec);
-  cache.put(burstKey, String(burst + 1), 21600);   // 6 h, the cache maximum
-  cache.put(hourKey, String(hits + 1), 3600);
-  return 'ok';
+  recent.push(now);
+  cache.put('rate', recent.join(','), Math.ceil(RATE_WINDOW_MS / 1000) + 60);
+  return true;
 }
 
 /* ======================================================================
@@ -268,7 +268,7 @@ function validateSubmission_(body) {
 
    Rename it here and in the spreadsheet together, or the next submit will
    quietly start a fresh, empty tab under the old name. */
-var SHEET_NAME = 'Invitations';
+var SHEET_NAME = 'primeA';
 
 function getInboxSheet_() {
   var file = SpreadsheetApp.getActive();
@@ -285,6 +285,32 @@ var COLUMNS = [
   'Source',         // 'page' | 'modal' — which copy of the form
   'Status'          // workflow column for whoever reviews the requests
 ];
+
+/* ----------------------------------------------------------------------
+   Duplicate guard. One person applies once; a second submit from the same
+   address is rejected rather than silently absorbed.
+
+   Reads the Email column (3) and scans it in memory. This is not a public
+   read route - doPost never returns what it finds, only a yes/no - so the
+   membership list still cannot be pulled back out. It does make the form
+   an address-checking oracle (type an email, learn if it applied); the
+   token gate and the hourly cap are what keep that probing slow.
+
+   Stored values carry Sheets' leading-apostrophe literal marker, which
+   getValues() strips on read; the defensive replace covers any row that
+   predates asLiteralText_. `email` is already normalised lowercase.
+   ---------------------------------------------------------------------- */
+function emailExists_(sheet, email) {
+  var last = sheet.getLastRow();
+  if (last < 2) return false;   // header only, or empty
+
+  var column = sheet.getRange(2, 3, last - 1, 1).getValues();
+  for (var i = 0; i < column.length; i++) {
+    var cell = String(column[i][0]).replace(/^'/, '').trim().toLowerCase();
+    if (cell === email) return true;
+  }
+  return false;
+}
 
 /* Idempotent: safe to call on every submit, cheap after the first run. */
 function ensureHeader_(sheet) {
@@ -324,7 +350,11 @@ function asLiteralText_(value) {
 }
 
 /* Appends one submission. Caller has already validated and normalised
-   `record`; this function only serialises it.
+   `record`; this function only serialises it. Returns true when a row was
+   written, false when the address had already applied.
+
+   The duplicate check and the append share one lock, so two concurrent
+   submits of the same new address cannot both get through.
 
    getLastRow()+1 under a script lock rather than appendRow() — appendRow
    re-parses its arguments as if they were typed into the cell, which is
@@ -337,6 +367,8 @@ function writeRow(record) {
   try {
     var sheet = getInboxSheet_();
     ensureHeader_(sheet);
+
+    if (emailExists_(sheet, record.email)) return false;
 
     var row = [
       asLiteralText_(record.receivedAt),
@@ -351,6 +383,7 @@ function writeRow(record) {
 
     sheet.getRange(sheet.getLastRow() + 1, 1, 1, row.length).setValues([row]);
     SpreadsheetApp.flush();
+    return true;
   } finally {
     lock.releaseLock();
   }
@@ -411,16 +444,26 @@ function doPost(e) {
       return respond_({ ok: false, error: 'token' });
     }
 
-    var limit = rateLimitCheck_(checked.record.email);
-    if (limit === 'repeat') return respond_({ ok: true });
-    if (limit !== 'ok')     return respond_({ ok: false, error: 'busy' });
+    if (!rateLimitOk_()) {
+      return respond_({ ok: false, error: 'busy' });
+    }
 
-    writeRow(checked.record);
+    /* writeRow returns false when this address has already applied. */
+    if (!writeRow(checked.record)) {
+      return respond_({ ok: false, error: 'duplicate' });
+    }
     return respond_({ ok: true });
 
   } catch (err) {
-    /* Logged for the owner (Executions in the Apps Script console),
-       never returned - an exception message can name internal state. */
+    /* A lock timeout means another submit is mid-write - genuinely
+       transient, so the visitor is told to retry rather than shown the
+       generic failure. */
+    if (err && err.message === 'busy') {
+      return respond_({ ok: false, error: 'busy' });
+    }
+    /* Everything else is logged for the owner (Executions in the Apps
+       Script console) and never returned - an exception message can name
+       internal state. */
     console.error('doPost failed: ' + (err && err.stack ? err.stack : err));
     return respond_({ ok: false, error: 'server' });
   }
@@ -456,15 +499,19 @@ function selfTest() {
     if (checked.ok) throw new Error('validation let a formula through: ' + probe);
   });
 
-  writeRow({
+  /* A fresh address each run, so the duplicate guard does not swallow the
+     second smoke test. */
+  var written = writeRow({
     receivedAt: new Date().toISOString(),
     fullName:   'Test Ionescu',
-    email:      'test@example.com',
+    email:      'test+' + Date.now() + '@example.com',
     signature:  'Test Ionescu',
     signedOn:   '2026-01-01',
     requestId:  Utilities.getUuid(),
     source:     'selftest'
   });
 
-  console.log('selfTest passed - delete the test row from the sheet.');
+  console.log(written
+    ? 'selfTest passed - delete the test row from the sheet.'
+    : 'selfTest ran but wrote nothing (duplicate guard).');
 }

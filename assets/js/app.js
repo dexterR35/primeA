@@ -351,6 +351,7 @@
       invalid_name:      'Numele nu pare valid. Folosește doar litere.',
       invalid_email:     'Adresa de email nu pare validă.',
       invalid_signature: 'Semnătura nu pare validă. Scrie-ți numele complet.',
+      duplicate:         'Această adresă de email a trimis deja o cerere.',
       token:             'Sesiunea a expirat. Reîncarcă pagina și încearcă din nou.',
       busy:              'Primim multe cereri chiar acum. Te rugăm să revii în câteva minute.',
       server:            'Ceva nu a funcționat. Te rugăm să încerci din nou.',

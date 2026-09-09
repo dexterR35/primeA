@@ -74,6 +74,18 @@ const sheetStub = {
   setFrozenRows: () => {},
   setColumnWidth: () => {},
   getRange: (row, col, numRows, numCols) => ({
+    getValues() {
+      const out = [];
+      for (let r = 0; r < numRows; r++) {
+        const src = rows[row - 1 + r] || [];
+        const cells = [];
+        for (let c = 0; c < numCols; c++) {
+          cells.push(src[col - 1 + c] === undefined ? '' : src[col - 1 + c]);
+        }
+        out.push(cells);
+      }
+      return out;
+    },
     setValues(values) {
       /* Mimics Sheets' own parsing: a leading apostrophe marks literal
          text and is stripped on read; anything else starting with = is a
