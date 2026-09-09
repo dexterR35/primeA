@@ -168,13 +168,13 @@ function validateSubmission_(body) {
   if (!email)     return { ok: false, error: 'invalid_email' };
   if (!signature) return { ok: false, error: 'invalid_signature' };
 
-  var now = new Date();
-  var tz  = Session.getScriptTimeZone();
-
   return {
     ok: true,
     record: {
-      receivedAt: Utilities.formatDate(now, tz, "yyyy-MM-dd'T'HH:mm:ssXXX"),
+      /* Formatted here, always Europe/Bucharest, independent of the
+         spreadsheet's own timezone. Stored as text - the plain string
+         "09.09.2026 16:15", not a timestamp. */
+      receivedAt: Utilities.formatDate(new Date(), 'Europe/Bucharest', 'dd.MM.yyyy HH:mm'),
       fullName:   fullName,
       signature:  signature,
       email:      email
@@ -368,7 +368,7 @@ function selfTest() {
   });
 
   var written = writeRow({
-    receivedAt: new Date().toISOString(),
+    receivedAt: Utilities.formatDate(new Date(), 'Europe/Bucharest', 'dd.MM.yyyy HH:mm'),
     fullName:   'Test Ionescu',
     signature:  'Test Ionescu',
     email:      'test+' + Date.now() + '@example.com'

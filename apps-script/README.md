@@ -93,10 +93,12 @@ The `primeA` tab, one row per request — four columns:
 `Received At · Full Name · Signature · Email`
 
 `Received At` is stamped from the server clock at the moment the submit is
-processed, formatted `yyyy-MM-dd'T'HH:mm:ssXXX` in the script's timezone. Every
-cell is written as literal text (leading apostrophe), so `Received At` is text,
-not a real date — it still sorts chronologically as a string; add a helper
-column with `=DATEVALUE()` only if you need date maths or range filters.
+processed and written pre-formatted as `dd.MM.yyyy HH:mm` (e.g. `09.09.2026
+16:15`), always `Europe/Bucharest` regardless of the spreadsheet's own timezone.
+It is stored as literal text — the plain string, not a timestamp. Do **not** add
+an `ARRAYFORMULA` helper column to reformat it: a whole-column formula pushes
+`getLastRow()` down and new rows then land far below the data instead of on the
+next free row.
 
 `Signature` is the visitor's typed consent gesture; in practice it repeats the
 full name.
