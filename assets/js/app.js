@@ -340,7 +340,7 @@
        spreadsheet - paste the /exec URL from `Deploy > New deployment`.
        See apps-script/README.md. Left empty, the form falls back to the
        old local stub so the page still demos without a backend. */
-    var ENDPOINT = 'https://script.google.com/macros/s/AKfycbxwPoSI4r_8rURu3Vd3TdtfT8guGYTdImVi4YYKiWjWMFA4CsKcJGjiNJ6r92owDvQ/exec';
+    var ENDPOINT = 'https://script.google.com/macros/s/AKfycbyepRpTVX4Bva8jAmwYHtZU-k7cauq0xAV_xish7_LsxJPofiLPCmXg6089PcqicsU/exec';
 
     /* Every check below is a courtesy to the visitor, not a defence: it
        spares them a round trip for a typo. The Apps Script repeats all of
