@@ -350,6 +350,7 @@
     var ERRORS = {
       invalid_name:      'Numele nu pare valid. Folosește doar litere.',
       invalid_email:     'Adresa de email nu pare validă.',
+      invalid_signature: 'Semnătura nu pare validă. Scrie-ți numele complet.',
       duplicate:         'Această adresă de email a trimis deja o cerere.',
       token:             'Sesiunea a expirat. Reîncarcă pagina și încearcă din nou.',
       busy:              'Primim multe cereri chiar acum. Te rugăm să revii în câteva minute.',
@@ -364,8 +365,8 @@
 
        Primed on first interaction rather than on page load: a visitor who
        never touches the form costs the endpoint nothing, and by the time
-       anyone has typed a name and an email the token is comfortably past
-       the server's minimum age. */
+       anyone has typed a name, an email and a signature the token is
+       comfortably past the server's minimum age. */
     var tokens = (function () {
       var pending = null;
 
@@ -402,10 +403,11 @@
            body is still JSON and the endpoint parses it as JSON. */
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: JSON.stringify({
-          fullName: data.fullName,
-          email:    data.email,
-          company:  data.company,
-          token:    token
+          fullName:  data.fullName,
+          email:     data.email,
+          signature: data.signature,
+          company:   data.company,
+          token:     token
         })
       }).then(function (r) { return r.json(); });
     }
@@ -418,6 +420,7 @@
       var panel = form.closest('.form-panel_inner') || form.parentNode;
       var done = panel.querySelector('.form-done');
       var status = form.querySelector('.form_status');
+      var dateEl = form.querySelector('.signature-meta_date');
       var resetBtn = panel.querySelector('[data-form-reset]');
       var submitBtn = form.querySelector('button[type="submit"]');
 
@@ -429,6 +432,14 @@
       form.addEventListener('focusin', function () { tokens.prime(); }, { once: true });
       var retried = false;
 
+      /* The signature block's electronic-signature date - stamped with today's
+         date on load so it reads as the moment the form is signed. */
+      if (dateEl) {
+        dateEl.textContent = new Date().toLocaleDateString('ro-RO', {
+          day: 'numeric', month: 'long', year: 'numeric'
+        });
+      }
+
       var rules = {
         fullName: function (v) {
           if (!v) return 'Te rugăm să îți scrii numele complet.';
@@ -438,6 +449,11 @@
         email: function (v) {
           if (!v) return 'Te rugăm să îți scrii adresa de email.';
           if (!EMAIL_RE.test(v)) return 'Adresa de email nu pare validă.';
+          return '';
+        },
+        signature: function (v) {
+          if (!v) return 'Te rugăm să semnezi cu numele tău complet.';
+          if (v.length < 2) return 'Semnătura pare prea scurtă.';
           return '';
         }
       };

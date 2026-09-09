@@ -25,6 +25,7 @@ function submit(over = {}, ageMs = 5000) {
   return post(Object.assign({
     fullName: 'Ana Maria Popescu',
     email: 'ana' + Math.random().toString(36).slice(2, 8) + '@example.com',
+    signature: 'Ana Maria Popescu',
     token: freshToken(ageMs)
   }, over));
 }
@@ -64,6 +65,8 @@ for (const payload of [
 ]) {
   const r = submit({ fullName: payload });
   check('rejects in name: ' + payload.slice(0, 28), r.ok === false && r.error === 'invalid_name');
+  const r2 = submit({ signature: payload });
+  check('rejects in signature: ' + payload.slice(0, 24), r2.ok === false && r2.error === 'invalid_signature');
 }
 /* Even if a payload ever reaches writeRow, the apostrophe must neutralise it —
    the sheet stub throws if a raw formula lands in a cell. */
@@ -81,6 +84,8 @@ check('rejects digits in a name', submit({ fullName: 'Ana 123' }).error === 'inv
 check('rejects an 81-char name', submit({ fullName: 'A'.repeat(81) }).error === 'invalid_name');
 check('accepts diacritics', submit({ fullName: 'Ștefan Țăran-Mureșan' }).ok === true);
 check("accepts an apostrophe name", submit({ fullName: "Anne O'Brien" }).ok === true);
+check('rejects a missing signature', submit({ signature: '' }).error === 'invalid_signature');
+check('rejects digits in a signature', submit({ signature: 'Ana 12' }).error === 'invalid_signature');
 check('rejects a bad email', submit({ email: 'not-an-email' }).error === 'invalid_email');
 check('rejects a double dot', submit({ email: 'a..b@example.com' }).error === 'invalid_email');
 check('rejects a missing TLD', submit({ email: 'a@example' }).error === 'invalid_email');

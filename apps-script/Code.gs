@@ -232,15 +232,21 @@ function validateSubmission_(body) {
      the bot what to change. Code.gs turns this into a fake success. */
   if (clean_(body.company) !== '') return { ok: false, error: 'honeypot' };
 
-  var fullName = validateName_(body.fullName);
-  var email    = validateEmail_(body.email);
+  var fullName  = validateName_(body.fullName);
+  var email     = validateEmail_(body.email);
+  var signature = validateName_(body.signature);
 
-  if (!fullName) return { ok: false, error: 'invalid_name' };
-  if (!email)    return { ok: false, error: 'invalid_email' };
+  if (!fullName)  return { ok: false, error: 'invalid_name' };
+  if (!email)     return { ok: false, error: 'invalid_email' };
+  if (!signature) return { ok: false, error: 'invalid_signature' };
 
   var now = new Date();
   var tz  = Session.getScriptTimeZone();
 
+  /* The signature is the visitor's consent gesture: it must be present and
+     name-shaped, so it is validated. It is NOT stored - it only ever
+     repeats the full name, so the sheet would carry the same value twice.
+     The four columns are Received At, Full Name, Email, Status. */
   return {
     ok: true,
     record: {
@@ -479,7 +485,9 @@ function selfTest() {
   ];
 
   probes.forEach(function (probe) {
-    var checked = validateSubmission_({ fullName: probe, email: 'probe@example.com' });
+    var checked = validateSubmission_({
+      fullName: probe, email: 'probe@example.com', signature: probe
+    });
     if (checked.ok) throw new Error('validation let a formula through: ' + probe);
   });
 

@@ -76,7 +76,7 @@ lose. The URL itself is stable across new versions of the same deployment.
 ## Tests
 
 ```sh
-node apps-script/test/test.js      # 62 checks, no dependencies
+node apps-script/test/test.js      # 69 checks, no dependencies
 ```
 
 `test/harness.js` loads `Code.gs` into a VM context with stubbed
@@ -91,6 +91,11 @@ actually defended" has a test.
 The `primeA` tab, one row per request — four columns:
 
 `Received At · Full Name · Email · Status`
+
+The form also has a **Semnătură** field. The server validates it (must be
+present and name-shaped) but does not store it — it only ever repeats the full
+name, so the sheet would hold the same value twice. It is the consent gesture,
+not a separate piece of data.
 
 `Received At` is stamped from the server clock at the moment the submit is
 processed, formatted `yyyy-MM-dd'T'HH:mm:ssXXX` in the script's timezone. Every
