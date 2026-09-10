@@ -1133,7 +1133,7 @@ body.is-modal-open .site-header { padding-right: var(--sb-gutter, 0px); }
   .h2       { font-size: clamp(30px, 2.64vw, 38px); line-height: 1.18; letter-spacing: -0.38px; }
   .h2--sm   { font-size: clamp(26px, 2.22vw, 32px); line-height: 1.2;  letter-spacing: -0.32px; }
   .h2--reg  { font-size: clamp(28px, 2.36vw, 34px); line-height: 1.26; letter-spacing: -0.34px; }
-  .lead     { font-size: 18px; line-height: 1.6; }
+  .lead     { font-size: 16.5px; line-height: 1.6; }
   .eyebrow  { font-size: 12px; letter-spacing: 2.64px; }
 
   .section-head { gap: 16px; }
@@ -1147,7 +1147,7 @@ body.is-modal-open .site-header { padding-right: var(--sb-gutter, 0px); }
 
   /* - hero - */
   .hero { height: 820px; min-height: 640px; }
-  .hero_content { padding-bottom: 90px; }
+  .hero_content { padding-bottom: 130px; }
   .hero_copy { gap: 24px; }
   .hero_headline { gap: 16px; }
 
