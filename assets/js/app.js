@@ -108,7 +108,7 @@
        slide disables the controls entirely. No config, no JSON, no library.
        ====================================================================== */
   
-    var AUTOPLAY_MS = 7000;
+    var AUTOPLAY_MS = 4500;
   
     /* Run after the page has finished loading, never during it. Waiting for
        `load` is the point: starting a timer at boot can fire while the hero
