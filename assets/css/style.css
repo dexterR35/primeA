@@ -951,7 +951,7 @@ html {
 .form-panel_ace { position: absolute; z-index: 2; }
 .form-panel_ace img { width: 9px; height: 21px; }
 .form-panel_ace--tl { left: 8px; top: 8px; }
-.form-panel_ace--br { right: 8px; bottom: 8px; }
+.form-panel_ace--br { right: 8px; bottom: 8px; transform: rotate(180deg); }
 
 /* ---- 6.7 Modal ---------------------------------------------------------
    <dialog> in the top layer. The panel is the same Background+Border+Shadow
