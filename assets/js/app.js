@@ -358,6 +358,39 @@
       network:           'Conexiunea a eșuat. Verifică internetul și încearcă din nou.'
     };
 
+    /* Apps Script can briefly queue concurrent executions. Never leave a
+       visitor's button disabled forever if Google does not complete a fetch. */
+    var TOKEN_TIMEOUT_MS = 12000;
+    var SUBMIT_TIMEOUT_MS = 30000;
+
+    function fetchWithTimeout(url, options, timeoutMs) {
+      var controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+      var timer;
+
+      if (controller) options.signal = controller.signal;
+
+      return new Promise(function (resolve, reject) {
+        timer = window.setTimeout(function () {
+          if (controller) controller.abort();
+          var error = new Error('timeout');
+          error.code = 'timeout';
+          reject(error);
+        }, timeoutMs);
+
+        fetch(url, options).then(resolve, reject);
+      }).then(function (response) {
+        window.clearTimeout(timer);
+        return response;
+      }, function (error) {
+        window.clearTimeout(timer);
+        throw error;
+      });
+    }
+
+    function delay(ms) {
+      return new Promise(function (resolve) { window.setTimeout(resolve, ms); });
+    }
+
     /* One-shot submit tokens. The endpoint burns each one on use, so the
        page keeps exactly one in flight and starts fetching the next as
        soon as it hands one out - a visitor can send a second request
@@ -372,11 +405,11 @@
 
       function refresh() {
         if (!ENDPOINT) return null;
-        pending = fetch(ENDPOINT + '?action=token', {
+        pending = fetchWithTimeout(ENDPOINT + '?action=token', {
           method: 'GET',
           credentials: 'omit',
           cache: 'no-store'
-        })
+        }, TOKEN_TIMEOUT_MS)
           .then(function (r) { return r.json(); })
           .then(function (data) { return data && data.ok ? data.token : ''; })
           .catch(function () { return ''; });   // offline: submit reports it
@@ -395,7 +428,7 @@
     }());
 
     function sendRequest(token, data) {
-      return fetch(ENDPOINT, {
+      return fetchWithTimeout(ENDPOINT, {
         method: 'POST',
         credentials: 'omit',
         /* text/plain keeps this a CORS "simple request", so the browser
@@ -409,7 +442,54 @@
           company:   data.company,
           token:     token
         })
-      }).then(function (r) { return r.json(); });
+      }, SUBMIT_TIMEOUT_MS).then(function (r) { return r.json(); });
+    }
+
+    /* A concurrent request can spend up to 20 seconds waiting for the sheet
+       lock and receive `busy`. Retry that transient result once with the next
+       one-shot token. A network/timeout failure also gets one retry: the
+       server may still have completed the first request, in which case its
+       email duplicate guard prevents a second row. */
+    function submitRequest(data) {
+      var tokenRetries = 0;
+      var busyRetries = 0;
+      var networkRetries = 0;
+      var ambiguousRetry = false;
+
+      function attempt() {
+        return tokens.take()
+          .then(function (token) {
+            if (!token) throw new Error('token_fetch');
+            return sendRequest(token, data);
+          })
+          .then(function (result) {
+            if (result && result.ok) return result;
+
+            var code = result && result.error ? result.error : 'server';
+            /* If the first response was lost after its row was written, the
+               retry correctly finds that email. For this attempt that means
+               success, not a duplicate error. */
+            if (code === 'duplicate' && ambiguousRetry) return { ok: true };
+            if (code === 'token' && tokenRetries < 1) {
+              tokenRetries++;
+              return delay(1600).then(attempt);
+            }
+            if (code === 'busy' && busyRetries < 1) {
+              busyRetries++;
+              return delay(1200).then(attempt);
+            }
+            return result;
+          }, function (error) {
+            if (networkRetries < 1) {
+              networkRetries++;
+              ambiguousRetry = true;
+              return delay(1200).then(attempt);
+            }
+            throw error;
+          });
+      }
+
+      return attempt();
     }
 
     /* Scoped to one panel so the page can host several copies of the form
@@ -430,7 +510,7 @@
 
       /* One fetch, on the first sign of a real visitor. */
       form.addEventListener('focusin', function () { tokens.prime(); }, { once: true });
-      var retried = false;
+      var submitting = false;
 
       /* The signature block's electronic-signature date - stamped with today's
          date on load so it reads as the moment the form is signed. */
@@ -489,6 +569,9 @@
   
       form.addEventListener('submit', function (e) {
         e.preventDefault();
+
+        /* Covers Enter-key submits as well as clicks on the disabled CTA. */
+        if (submitting) return;
   
         /* Honeypot: bots fill the hidden field, people never see it. Show the
            success state rather than an error - telling a bot why it failed
@@ -513,6 +596,7 @@
         }
   
         if (status) status.textContent = '';
+        submitting = true;
   
         if (submitBtn) {
           submitBtn.disabled = true;
@@ -523,35 +607,18 @@
         if (!ENDPOINT) { window.setTimeout(showSuccess, 700); return; }
 
         data.company = pot ? pot.value : '';
-        retried = false;              // one retry per attempt, not per page
-
-        tokens.take()
-          .then(function (token) { return sendRequest(token, data); })
+        submitRequest(data)
           .then(function (result) {
             if (result && result.ok) { showSuccess(); return; }
 
             var code = result && result.error ? result.error : 'server';
-            /* A stale token is the one failure worth retrying silently -
-               it happens to anyone who leaves the tab open past the
-               token's 30-minute window. One retry, then give up. */
-            if (code === 'token' && !retried) {
-              retried = true;
-              /* The replacement token has to clear the server's minimum
-                 age before it is worth spending, hence the wait. */
-              return new Promise(function (resolve) { window.setTimeout(resolve, 1600); })
-                .then(function () { return tokens.take(); })
-                .then(function (token) { return sendRequest(token, data); })
-                .then(function (second) {
-                  if (second && second.ok) { showSuccess(); return; }
-                  fail(second && second.error ? second.error : 'server');
-                });
-            }
             fail(code);
           })
           .catch(function () { fail('network'); });
       });
 
       function fail(code) {
+        submitting = false;
         if (status) status.textContent = ERRORS[code] || ERRORS.server;
         if (submitBtn) {
           submitBtn.disabled = false;
@@ -572,6 +639,7 @@
   
       if (resetBtn) {
         resetBtn.addEventListener('click', function () {
+          submitting = false;
           form.reset();
           Object.keys(rules).forEach(function (name) { showError(name, ''); });
           if (submitBtn) {
@@ -731,4 +799,3 @@
       boot();
     }
   })();
-  
