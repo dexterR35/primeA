@@ -27,8 +27,6 @@ The access form posts to a Google Apps Script web app, which appends a row to a 
 | Footer | Tagline and legal links |
 | Modal | Second copy of the same form (`#requestModal`) |
 
-Copy is Romanian (`lang="ro"`). Hero slides 2 and 3 still carry `lang="en"` in the markup even though their text is Romanian — drop that attribute when you next edit those slides.
-
 ---
 
 ## Layout
@@ -45,12 +43,11 @@ assets/
   fonts/                Four variable woff2 files
   js/app.js             Carousel, lazy media, header, form, modal
   img/                  Hero, perks, OG card, PWA icons
-  svg/                  Logos, icons, decorative marks
+  svg/                  Logos, benefit marks, decorative aces
 apps-script/
   Code.gs               Form endpoint (bound to the spreadsheet)
   appsscript.json       Runtime, OAuth scope, web-app access
   test/                 Node harness — `node apps-script/test/test.js`
-icons/                  Local icon-prompt gallery — not part of the live page
 ```
 
 ---
@@ -58,7 +55,7 @@ icons/                  Local icon-prompt gallery — not part of the live page
 ## Before you deploy
 
 1. Replace `https://www.example.com` with the real origin in `index.html`, `robots.txt`, and `sitemap.xml`.
-2. Confirm `ENDPOINT` in `assets/js/app.js` is the Apps Script `/exec` URL. Empty means the form only fakes success locally and writes nothing.
+2. Confirm `ENDPOINT` in `assets/js/app.js` is the live Apps Script `/exec` URL.
 3. Point footer / modal legal links (`href="#"`) at real Confidențialitate, Termeni, and Joc Responsabil pages before collecting live data.
 4. Serve over HTTPS. The CSP meta tag includes `upgrade-insecure-requests`.
 
