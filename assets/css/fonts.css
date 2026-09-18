@@ -1,17 +1,4 @@
-/* ==========================================================================
-   Self-hosted variable fonts - Inter + Outfit, latin & latin-ext, woff2.
 
-   One file per family per subset, carrying EVERY weight in the range. The
-   static build needed 14 files / 658 KB because each weight was its own
-   download; this is 4 files / 176 KB for the same result.
-
-   `font-weight: 300 700` declares the supported range - every
-   `font-weight: 500` in style.css keeps working untouched.
-
-   Served from this origin so no visitor IP reaches Google
-   (LG Munchen I, 3 O 17493/20). Subsets past latin/latin-ext were dropped;
-   Romanian needs latin-ext for ă ș ț.
-   ========================================================================== */
 
 /* Inter 300 700 - latin-ext */
 @font-face {

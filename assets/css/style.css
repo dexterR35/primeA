@@ -1200,9 +1200,6 @@ body.is-modal-open .site-header { padding-right: var(--sb-gutter, 0px); }
 
 /* ---- 7.3 Very small phones --------------------------------------------- */
 
-/* On narrow phones the header cluster tightens rather than the CTA label
-   getting cut - the label is copy, not decoration. Everything stays above the
-   24 px touch target floor. Measured against the longest label at 320 px. */
 @media (max-width: 400px) {
   .site-header_inner       { gap: 10px; }
   .site-header_actions     { gap: 6px; }
