@@ -150,7 +150,7 @@ function validateEmail_(raw) {
 
 /* Returns { ok: true, record } or { ok: false, error }.
    `body` is the already-JSON-parsed request. Signature is validated
-   (consent gesture) and stored in column C. */
+   (consent gesture) and stored in column D. */
 function validateSubmission_(body) {
   if (!body || typeof body !== 'object' || Array.isArray(body)) {
     return { ok: false, error: 'invalid' };
@@ -194,15 +194,15 @@ function getInboxSheet_() {
   return file.getSheetByName(SHEET_NAME) || file.insertSheet(SHEET_NAME, 0);
 }
 
-var COLUMNS = ['Received At', 'Full Name', 'Signature', 'Email'];
+var COLUMNS = ['Data', 'Nume', 'Email', 'Signature'];
 
-/* Duplicate guard - reads the Email column (column 4) and scans it in
+/* Duplicate guard - reads the Email column (column 3) and scans it in
    memory. doPost never returns what it finds, only yes/no. */
 function emailExists_(sheet, email) {
   var last = sheet.getLastRow();
   if (last < 2) return false;   // header only, or empty
 
-  var column = sheet.getRange(2, 4, last - 1, 1).getValues();
+  var column = sheet.getRange(2, 3, last - 1, 1).getValues();
   for (var i = 0; i < column.length; i++) {
     var cell = String(column[i][0]).replace(/^'/, '').trim().toLowerCase();
     if (cell === email) return true;
@@ -219,10 +219,10 @@ function ensureHeader_(sheet) {
        .setFontWeight('bold');
   sheet.setFrozenRows(1);
 
-  sheet.setColumnWidth(1, 170);   // Received At
-  sheet.setColumnWidth(2, 200);   // Full Name
-  sheet.setColumnWidth(3, 200);   // Signature
-  sheet.setColumnWidth(4, 240);   // Email
+  sheet.setColumnWidth(1, 170);   // Data
+  sheet.setColumnWidth(2, 200);   // Nume
+  sheet.setColumnWidth(3, 240);   // Email
+  sheet.setColumnWidth(4, 200);   // Signature
 }
 
 /* A cell starting with = + - @ is a live formula in Sheets. A single
@@ -250,8 +250,8 @@ function writeRow(record) {
     var row = [
       asLiteralText_(record.receivedAt),
       asLiteralText_(record.fullName),
-      asLiteralText_(record.signature),
-      asLiteralText_(record.email)
+      asLiteralText_(record.email),
+      asLiteralText_(record.signature)
     ];
 
     sheet.getRange(sheet.getLastRow() + 1, 1, 1, row.length).setValues([row]);

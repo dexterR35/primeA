@@ -67,7 +67,7 @@ Two copies of the same form: the registration section and the header modal. Each
 
 Client validation is UX only. The Apps Script repeats every check, burns a one-shot token, and writes:
 
-`Received At · Full Name · Signature · Email`
+`Data · Nume · Email · Signature`
 
 on the `primeA` tab. POST uses `text/plain` so the browser does not preflight (Apps Script cannot answer `OPTIONS`). Tokens are fetched on first focus of a form, not on page load.
 

@@ -402,7 +402,7 @@
   var EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
   var ENDPOINT =
-    "https://script.google.com/macros/s/AKfycbyepRpTVX4Bva8jAmwYHtZU-k7cauq0xAV_xish7_LsxJPofiLPCmXg6089PcqicsU/exec";
+    "https://script.google.com/macros/s/AKfycbxxtnm--TyPW1NaUrGhZa9CaeSlr1QU-gYxImCn2DmgHLID3h-vq3VPAFVumzWVhW0/exec";
 
   var ERRORS = {
     invalid_name: "Numele nu pare valid. Folosește doar litere.",

@@ -90,9 +90,9 @@ actually defended" has a test.
 
 The `primeA` tab, one row per request — four columns:
 
-`Received At · Full Name · Signature · Email`
+`Data · Nume · Email · Signature`
 
-`Received At` is stamped from the server clock at the moment the submit is
+`Data` is stamped from the server clock at the moment the submit is
 processed and written pre-formatted as `dd.MM.yyyy HH:mm` (e.g. `09.09.2026
 16:15`), always `Europe/Bucharest` regardless of the spreadsheet's own timezone.
 It is stored as literal text — the plain string, not a timestamp. Do **not** add
@@ -106,7 +106,7 @@ full name.
 The script only ever appends, it never rewrites an existing row, so nothing you
 add to the sheet can be clobbered by a submit — e.g. a `Status` column in
 column E is safe, the script writes A–D and never touches it. The duplicate
-check reads the `Email` column (**column 4**) once per submit.
+check reads the `Email` column (**column 3**) once per submit.
 
 The script writes and reads by **column position**, not header text: keep these
 four columns in this order. Adding, removing or reordering one of them silently

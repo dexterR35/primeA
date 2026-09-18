@@ -40,7 +40,7 @@ S.setup();
 check('creates the target tab when it is missing',
   !!book.getSheetByName('primeA'));
 check('...as the first tab', book.inserted.length === 1 && book.inserted[0].index === 0);
-check('setup writes the header row', h.rows.length === 1 && h.rows[0][0] === 'Received At');
+check('setup writes the header row', h.rows.length === 1 && h.rows[0][0] === 'Data');
 check('setup is idempotent', (S.setup(), h.rows.length === 1));
 check('...and does not create a second tab', book.inserted.length === 1);
 check('a submit reuses the same tab',
@@ -52,10 +52,10 @@ const before = h.rows.length;
 const ok = submit();
 check('accepts a valid request', ok.ok === true);
 check('appends exactly one row', h.rows.length === before + 1);
-check('row order is Received At, Full Name, Signature, Email',
+check('row order is Data, Nume, Email, Signature',
   h.lastRow()[1] === 'Ana Maria Popescu' &&
-  h.lastRow()[2] === 'Ana Maria Popescu' &&
-  h.lastRow()[3].indexOf('@example.com') !== -1);
+  h.lastRow()[2].indexOf('@example.com') !== -1 &&
+  h.lastRow()[3] === 'Ana Maria Popescu');
 check('row has four columns', h.lastRow().length === 4);
 
 console.log('\nformula / CSV injection');
@@ -110,7 +110,7 @@ check('strips zero-width characters',
 check('collapses whitespace',
   submit({ fullName: '  Ana   Popescu  ' }).ok === true && h.lastRow()[1] === 'Ana Popescu');
 check('lowercases the email',
-  submit({ email: 'MiXeD@Example.COM' }).ok === true && h.lastRow()[3] === 'mixed@example.com');
+  submit({ email: 'MiXeD@Example.COM' }).ok === true && h.lastRow()[2] === 'mixed@example.com');
 
 console.log('\nhoneypot');
 const rowsBefore = h.rows.length;
