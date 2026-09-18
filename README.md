@@ -1,6 +1,6 @@
 # Loja Privată
 
-Romanian landing page for a recommendation-only private club. Static HTML, CSS, and JavaScript — no build step, no framework, no npm dependencies.
+Romanian landing page for a recommendation-only private club. Static HTML, CSS, and JavaScript.
 
 Open `index.html` or serve the folder:
 
